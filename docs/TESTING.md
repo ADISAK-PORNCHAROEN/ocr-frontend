@@ -17,7 +17,7 @@ used an isolated temporary directory.
 | `pnpm lint` | Passed. Biome checked 32 files. |
 | `pnpm typecheck` | Passed. |
 | `pnpm test:unit` | Passed. 10 tests across 2 files. |
-| `pnpm test:e2e` | Passed. 17 Playwright scenarios. |
+| `pnpm test:e2e` | Passed. 18 Playwright scenarios. |
 | `pnpm build` | Passed. `/` is static and `/api/ocr/[...segments]` is dynamic. |
 | `pnpm audit --prod` | No known production dependency vulnerabilities. |
 | From the backend repository, `.venv\Scripts\python.exe -m pytest` | Passed. 36 tests passed and 3 were skipped. |
@@ -28,8 +28,9 @@ stale requests, page selection, blank and failed pages, editing, restore, copy,
 complete and partial exports, expiry, delete recovery, keyboard use, and mobile
 layout. One regression edits two pages, triggers a page-list 404 on reconnect,
 then verifies both drafts can be copied together and no complete export is
-offered. Playwright writes transient output under the ignored `test-results/`
-directory.
+offered. Another reloads after editing and verifies the app starts a fresh
+session without retaining in-memory drafts. Playwright writes transient output
+under the ignored `test-results/` directory.
 
 ## Real backend integration
 
