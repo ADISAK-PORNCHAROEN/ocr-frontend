@@ -172,3 +172,14 @@ test("recovers all drafts when the page-list query returns 404 after reconnect",
 	const copiedDrafts = await page.evaluate(() => navigator.clipboard.readText());
 	expect(copiedDrafts.replace(/\r\n/g, "\n")).toBe("หน้า 1\nฉบับแก้ไขหน้าแรก\n\nหน้า 2\nฉบับแก้ไขหน้าสอง");
 });
+
+test("refresh starts a new session without keeping in-memory edits", async ({ page }) => {
+	await uploadDocument(page, "refresh-session.pdf");
+	await page.getByLabel("ข้อความที่แก้ไข").fill("มีเฉพาะใน session นี้");
+
+	await page.reload();
+
+	await expect(page.getByRole("heading", { name: "ตรวจเอกสารได้ทีละหน้า" })).toBeVisible();
+	await expect(page.getByLabel("ข้อความที่แก้ไข")).toHaveCount(0);
+	await expect(page.getByRole("button", { name: "เริ่มถอดข้อความ" })).toBeDisabled();
+});
