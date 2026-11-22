@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { Job, PageDetail } from "@/features/ocr/api/schema";
 import {
 	exportFilename,
+	serializeDraftRecovery,
 	serializeJsonExport,
 	serializeTextExport,
 } from "@/features/ocr/export/serialize";
@@ -93,6 +94,12 @@ describe("memory-only OCR session", () => {
 });
 
 describe("export serializers", () => {
+	it("serializes edited drafts in page order and keeps intentional blank drafts", () => {
+		expect(serializeDraftRecovery({ 3: "หน้าสาม", 1: "หน้าแรก", 2: "" })).toBe(
+			"หน้า 1\nหน้าแรก\n\nหน้า 2\n\n\nหน้า 3\nหน้าสาม",
+		);
+	});
+
 	it("sorts all pages, preserves original OCR separately, and records failed pages", () => {
 		const snapshot = {
 			job,

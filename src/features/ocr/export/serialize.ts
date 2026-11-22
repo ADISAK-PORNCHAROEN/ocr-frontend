@@ -28,6 +28,13 @@ export function serializeTextExport(snapshot: ExportSnapshot) {
 		.join("\n\n");
 }
 
+export function serializeDraftRecovery(drafts: Readonly<Record<number, string>>) {
+	return Object.entries(drafts)
+		.sort(([left], [right]) => Number(left) - Number(right))
+		.map(([pageNumber, text]) => `หน้า ${pageNumber}\n${text}`)
+		.join("\n\n");
+}
+
 export function serializeJsonExport(snapshot: ExportSnapshot) {
 	return JSON.stringify(
 		{

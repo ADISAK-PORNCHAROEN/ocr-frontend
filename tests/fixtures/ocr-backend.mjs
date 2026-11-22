@@ -31,6 +31,8 @@ function createJob(filename) {
 		statusReads: 0,
 		deleteReads: 0,
 		detailReads: [],
+		pageListReads: 0,
+		pageList404Reads: 0,
 		createdAt: new Date().toISOString(),
 		expiresAt: new Date(Date.now() + 3600_000).toISOString(),
 		expired: false,
@@ -147,9 +149,21 @@ const server = createServer(async (request, response) => {
 			statusReads: job?.statusReads ?? 0,
 			deleteReads: job?.deleteReads ?? 0,
 			detailReads: job?.detailReads ?? [],
+			pageListReads: job?.pageListReads ?? 0,
+			pageList404Reads: job?.pageList404Reads ?? 0,
 			uncertainAttempts,
 			abortedUpstreamResponses,
 		});
+		return;
+	}
+	if (path === "/__fixture/expire-page-list" && request.method === "POST") {
+		const job = activeJobId ? jobs.get(activeJobId) : null;
+		if (!job) {
+			jobNotFound(response);
+			return;
+		}
+		job.pageListExpired = true;
+		json(response, 200, { pageListExpired: true });
 		return;
 	}
 	if (path === "/api/v1/ocr/capabilities" && request.method === "GET") {
@@ -241,6 +255,12 @@ const server = createServer(async (request, response) => {
 		return;
 	}
 	if (suffix === "/pages" && request.method === "GET") {
+		job.pageListReads += 1;
+		if (job.pageListExpired) {
+			job.pageList404Reads += 1;
+			jobNotFound(response);
+			return;
+		}
 		json(response, 200, { pages: [page(job, 1), page(job, 2), page(job, 3), page(job, 4)] });
 		return;
 	}

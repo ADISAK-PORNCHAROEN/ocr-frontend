@@ -5,9 +5,19 @@ import { useEffect, useMemo, useReducer, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { createJob, deleteJob, OcrRequestError } from "../api/client";
 import type { Job, PageDetail, PageSummary } from "../api/schema";
-import { exportFilename, serializeJsonExport, serializeTextExport } from "../export/serialize";
+import {
+	exportFilename,
+	serializeDraftRecovery,
+	serializeJsonExport,
+	serializeTextExport,
+} from "../export/serialize";
 import { ocrKeys, ocrQueries, shouldPollJob } from "../queries";
-import { createInitialSession, hasUndownloadedEdits, sessionReducer } from "../session/session";
+import {
+	createInitialSession,
+	hasUndownloadedEdits,
+	pageDraft,
+	sessionReducer,
+} from "../session/session";
 import { PageReview } from "./PageReview";
 import { ProgressPanel } from "./ProgressPanel";
 import { UploadPanel } from "./UploadPanel";
@@ -202,15 +212,22 @@ function ActiveJob({ initialJob, onEnd }: { initialJob: Job; onEnd: () => void }
 
 	async function copyCurrentPage() {
 		const original = pageQuery.data?.originalText ?? "";
-		const text = Object.hasOwn(session.drafts, session.selectedPage)
-			? session.drafts[session.selectedPage]
-			: original;
+		const text = pageDraft(session, session.selectedPage, original);
+		await copyText(text, "คัดลอกข้อความหน้านี้แล้ว");
+	}
+
+	async function copyText(text: string, successMessage: string) {
 		try {
 			await navigator.clipboard.writeText(text);
-			setNotice("คัดลอกข้อความหน้านี้แล้ว");
+			setNotice(successMessage);
 		} catch {
-			setOperationError("คัดลอกไม่ได้ กรุณาเลือกข้อความในช่องแล้วคัดลอกด้วยแป้นพิมพ์");
+			setOperationError("คัดลอกไม่ได้ กรุณาเลือกข้อความแล้วคัดลอกด้วยแป้นพิมพ์");
 		}
+	}
+
+	async function copyAllDrafts() {
+		const text = serializeDraftRecovery(session.drafts);
+		if (text) await copyText(text, "คัดลอกข้อความ draft ทั้งหมดแล้ว");
 	}
 
 	async function download(format: "txt" | "json") {
@@ -368,7 +385,44 @@ function ActiveJob({ initialJob, onEnd }: { initialJob: Job; onEnd: () => void }
 			) : null}
 
 			{terminal ? (
-				pagesQuery.isPending ? (
+				expired && Object.keys(session.drafts).length > 0 ? (
+					<section className="draft-recovery" aria-labelledby="draft-recovery-title">
+						<div className="section-heading">
+							<div>
+								<h2 id="draft-recovery-title">กู้คืนข้อความที่แก้ไข</h2>
+								<p>รายการหน้าจาก backend ใช้งานไม่ได้ แต่ draft ที่แก้ไว้ยังอยู่ในหน่วยความจำ</p>
+							</div>
+							<Button
+								variant="secondary"
+								className="secondary-button"
+								type="button"
+								onClick={() => void copyAllDrafts()}
+							>
+								คัดลอก draft ทั้งหมด
+							</Button>
+						</div>
+						<ul className="draft-recovery-list">
+							{Object.entries(session.drafts)
+								.sort(([left], [right]) => Number(left) - Number(right))
+								.map(([pageNumber, text]) => (
+									<li key={pageNumber}>
+										<div>
+											<h3>หน้า {pageNumber}</h3>
+											<pre>{text || "(ข้อความว่าง)"}</pre>
+										</div>
+										<Button
+											variant="ghost"
+											className="text-button"
+											type="button"
+											onClick={() => void copyText(text, `คัดลอก draft หน้า ${pageNumber} แล้ว`)}
+										>
+											คัดลอก draft หน้านี้
+										</Button>
+									</li>
+								))}
+						</ul>
+					</section>
+				) : pagesQuery.isPending ? (
 					<div className="panel-message">กำลังโหลดรายการหน้า…</div>
 				) : pagesQuery.error ? (
 					<div className="error-callout" role="alert">

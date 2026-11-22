@@ -127,10 +127,48 @@ test("keeps edits copyable and disables complete export when the job expires dur
 	await page.getByRole("button", { name: "ดาวน์โหลด TXT" }).click();
 	expect(await pendingDownload).toBeNull();
 	await expect(page.locator(".warning-callout[role=alert]")).toContainText("งานหมดอายุหรือถูกลบแล้ว");
-	await expect(page.getByRole("button", { name: "ดาวน์โหลด TXT" })).toBeDisabled();
+	await expect(page.getByRole("button", { name: "ดาวน์โหลด TXT" })).toHaveCount(0);
 	await page.getByRole("button", { name: "คัดลอกหน้านี้" }).click();
 	await expect(page.locator(".success-message")).toContainText("คัดลอกข้อความหน้านี้แล้ว");
 	expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
 		"ข้อความที่ต้องเก็บไว้หลังงานหมดอายุ",
 	);
+});
+
+test("recovers all drafts when the page-list query returns 404 after reconnect", async ({
+	page,
+	request,
+}) => {
+	await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+	await uploadDocument(page, "expires-after-reconnect.pdf");
+	const editor = page.getByLabel("ข้อความที่แก้ไข");
+	await editor.fill("ฉบับแก้ไขหน้าแรก");
+	await page.getByRole("button", { name: "หน้า 2 หน้าว่าง" }).click();
+	await editor.fill("ฉบับแก้ไขหน้าสอง");
+
+	const before = await request
+		.get("http://127.0.0.1:4010/__fixture/state")
+		.then((response) => response.json());
+	await page.context().setOffline(true);
+	await request.post("http://127.0.0.1:4010/__fixture/expire-page-list");
+	await page.context().setOffline(false);
+
+	await expect(page.getByRole("heading", { name: "กู้คืนข้อความที่แก้ไข" })).toBeVisible();
+	await expect(page.getByRole("heading", { name: "หน้า 1" })).toBeVisible();
+	await expect(page.getByRole("heading", { name: "หน้า 2" })).toBeVisible();
+	await expect(page.getByRole("button", { name: "ดาวน์โหลด TXT" })).toHaveCount(0);
+	await expect(page.getByRole("button", { name: "ดาวน์โหลด JSON" })).toHaveCount(0);
+	await expect
+		.poll(async () =>
+			request
+				.get("http://127.0.0.1:4010/__fixture/state")
+				.then((response) => response.json())
+				.then((state) => state.pageList404Reads),
+		)
+		.toBeGreaterThan(before.pageList404Reads);
+
+	await page.getByRole("button", { name: "คัดลอก draft ทั้งหมด" }).click();
+	await expect(page.locator(".success-message")).toContainText("คัดลอกข้อความ draft ทั้งหมดแล้ว");
+	const copiedDrafts = await page.evaluate(() => navigator.clipboard.readText());
+	expect(copiedDrafts.replace(/\r\n/g, "\n")).toBe("หน้า 1\nฉบับแก้ไขหน้าแรก\n\nหน้า 2\nฉบับแก้ไขหน้าสอง");
 });
