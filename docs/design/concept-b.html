@@ -1,0 +1,1150 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1930">
+  <title>Signal Desk — OCR Playground</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink-950: #0b1930;
+      --ink-900: #10213b;
+      --ink-800: #1a3150;
+      --ink-700: #294563;
+      --ink-600: #42617e;
+      --ink-500: #59758e;
+      --paper: #fff;
+      --ground: #f1f5f9;
+      --ground-strong: #e7eef5;
+      --line: #d5e0e9;
+      --line-soft: #e7edf3;
+      --cyan-700: #087b9c;
+      --cyan-600: #0799bd;
+      --cyan-500: #19b9d8;
+      --cyan-100: #dcf5fb;
+      --cyan-050: #f0fbfd;
+      --green-800: #116143;
+      --green-100: #d9f4e7;
+      --amber-800: #805214;
+      --amber-100: #fff0cf;
+      --red-800: #963d3e;
+      --red-100: #fde7e6;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --shadow-paper: 0 14px 32px rgb(14 34 56 / 12%), 0 2px 6px rgb(14 34 56 / 8%);
+      --font: "Noto Sans Thai", "Leelawadee UI", Tahoma, system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      min-width: 320px;
+      background: var(--ground);
+      scrollbar-color: #91a8ba #e6edf3;
+      scrollbar-width: thin;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink-900);
+      background: var(--ground);
+      font: 15px/1.55 var(--font);
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    ::selection { color: var(--ink-950); background: #a9e9f5; }
+    button, input, select, textarea { font: inherit; }
+    button { color: inherit; }
+    button:focus-visible, select:focus-visible, textarea:focus-visible, input:focus-visible + label {
+      outline: 3px solid #48c6e1;
+      outline-offset: 3px;
+    }
+    a { color: inherit; text-underline-offset: 3px; }
+
+    .app-shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 248px minmax(0, 1fr);
+    }
+
+    .rail {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 25px 16px 20px;
+      color: #e7f0f8;
+      background: var(--ink-950);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 10px;
+      color: #f5fbff;
+      text-decoration: none;
+    }
+
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 11px;
+      color: #84e2f2;
+      background: #163451;
+    }
+
+    .brand-name { display: block; font-size: 15px; font-weight: 700; letter-spacing: -.025em; }
+    .brand-note { display: block; margin-top: -1px; color: #a9bfd2; font-size: 12px; letter-spacing: .045em; }
+
+    .rail-label {
+      margin: 43px 12px 12px;
+      color: #97aec3;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .11em;
+      text-transform: uppercase;
+    }
+
+    .nav-list { display: grid; gap: 5px; margin: 0; padding: 0; list-style: none; }
+    .nav-button {
+      position: relative;
+      width: 100%;
+      min-height: 46px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 9px 12px 9px 14px;
+      border: 0;
+      border-radius: 9px;
+      color: #c1d1df;
+      background: transparent;
+      text-align: left;
+      cursor: pointer;
+      transition: background-color .18s ease, color .18s ease;
+    }
+
+    .nav-button:hover { color: white; background: #142a45; }
+    .nav-button[aria-current="page"] { color: white; background: #183451; font-weight: 650; }
+    .nav-button[aria-current="page"]::before {
+      position: absolute;
+      inset: 11px auto 11px 0;
+      width: 3px;
+      border-radius: 0 3px 3px 0;
+      background: var(--cyan-500);
+      content: "";
+    }
+
+    .nav-button svg { flex: 0 0 auto; color: #87a4bc; }
+    .nav-button[aria-current="page"] svg { color: #78d8ea; }
+    .nav-hint { margin-left: auto; color: #94afc4; font-size: 11px; }
+
+    .rail-spacer { flex: 1; min-height: 42px; }
+
+    .privacy-note {
+      margin: 0 5px;
+      padding: 16px 13px;
+      border: 1px solid #29425c;
+      border-radius: 12px;
+      background: #10233c;
+    }
+
+    .privacy-heading { display: flex; align-items: center; gap: 8px; color: #dceaf5; font-size: 12px; font-weight: 650; }
+    .privacy-heading svg { color: #7ed7e8; }
+    .privacy-note p { margin: 7px 0 0; color: #afc2d2; font-size: 12px; line-height: 1.55; }
+
+    .main-area { min-width: 0; }
+
+    .topbar {
+      min-height: 76px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 15px clamp(20px, 3.5vw, 54px);
+      border-bottom: 1px solid var(--line);
+      background: #f8fafc;
+    }
+
+    .crumbs { display: flex; align-items: center; gap: 9px; color: var(--ink-600); font-size: 13px; }
+    .crumbs strong { color: var(--ink-900); font-weight: 650; }
+    .crumb-separator { width: 14px; height: 14px; color: #8aa1b5; }
+
+    .top-actions { display: flex; align-items: center; gap: 10px; }
+    .quiet-note { color: var(--ink-600); font-size: 12px; }
+
+    .content {
+      width: min(100%, 1540px);
+      margin: 0 auto;
+      padding: 25px clamp(20px, 3.5vw, 54px) 40px;
+    }
+
+    .demo-banner {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 23px;
+      padding: 10px 13px;
+      border: 1px solid #b6deea;
+      border-radius: 9px;
+      color: #15516a;
+      background: #eaf8fc;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .demo-banner svg { flex: 0 0 auto; margin-top: 1px; color: var(--cyan-700); }
+    .demo-banner strong { color: #103c53; font-weight: 700; }
+
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { margin-bottom: 4px; color: var(--ink-950); font-size: clamp(23px, 2vw, 29px); line-height: 1.3; letter-spacing: -.025em; }
+    h2 { margin-bottom: 0; font-size: 16px; line-height: 1.4; letter-spacing: -.01em; }
+
+    .title-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; }
+    .title-copy { min-width: 0; }
+    .file-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; color: var(--ink-600); font-size: 13px; }
+    .file-name { color: #284661; font-weight: 600; }
+    .file-detail { color: #4d6477; }
+    .dot-separator { width: 3px; height: 3px; border-radius: 50%; background: #91a6b8; }
+
+    .status-pill {
+      min-height: 30px;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      color: var(--amber-800);
+      background: var(--amber-100);
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .status-pill .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #c7841d; }
+
+    .progress-block {
+      margin-top: 22px;
+      padding: 16px 18px 15px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      background: var(--paper);
+    }
+
+    .progress-topline { display: flex; justify-content: space-between; align-items: center; gap: 18px; }
+    .progress-title { color: var(--ink-900); font-size: 13px; font-weight: 700; }
+    .progress-copy { margin-left: 8px; color: var(--ink-600); font-size: 12px; }
+    .text-button {
+      border: 0;
+      padding: 4px 0;
+      color: var(--cyan-700);
+      background: transparent;
+      font-size: 12px;
+      font-weight: 650;
+      text-decoration: underline;
+      text-decoration-color: #9bcfdb;
+      text-underline-offset: 3px;
+      cursor: pointer;
+    }
+
+    .page-track {
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 15px;
+    }
+
+    .page-track::before {
+      position: absolute;
+      z-index: 0;
+      top: 9px;
+      right: 15%;
+      left: 15%;
+      height: 2px;
+      background: linear-gradient(90deg, var(--cyan-600) 0%, var(--cyan-600) 66%, #d9e4ec 66%, #d9e4ec 100%);
+      content: "";
+    }
+
+    .track-item { position: relative; z-index: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
+    .track-mark {
+      width: 19px;
+      height: 19px;
+      display: grid;
+      place-items: center;
+      border: 2px solid #fff;
+      border-radius: 50%;
+      color: white;
+      background: var(--cyan-700);
+      box-shadow: 0 0 0 1px #6ac3d5;
+    }
+    .track-item.failed .track-mark { color: var(--amber-800); background: #f1c16e; box-shadow: 0 0 0 1px #d9a64b; }
+    .track-label { color: #42617a; font-size: 12px; line-height: 1.35; }
+    .track-label strong { color: var(--ink-800); font-weight: 650; }
+
+    .workspace-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin: 22px 0 12px;
+    }
+
+    .selector-group { min-width: 0; display: flex; align-items: center; gap: 10px; }
+    .selector-title { color: var(--ink-800); font-size: 13px; font-weight: 700; white-space: nowrap; }
+    .page-tabs { display: inline-flex; align-items: center; gap: 4px; padding: 3px; border: 1px solid var(--line); border-radius: 10px; background: #e8eef4; }
+    .page-tab {
+      min-width: 75px;
+      min-height: 37px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 6px 9px;
+      border: 0;
+      border-radius: 7px;
+      color: #4a647b;
+      background: transparent;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .page-tab:hover { color: var(--ink-900); background: #f5f8fb; }
+    .page-tab[aria-pressed="true"] { color: #075a75; background: white; box-shadow: 0 1px 3px rgb(18 42 66 / 12%); }
+    .page-tab .tab-indicator { width: 6px; height: 6px; border-radius: 50%; background: #36a978; }
+    .page-tab[data-state="failed"] .tab-indicator { background: #d28b24; }
+
+    .export-controls { display: flex; align-items: center; gap: 8px; }
+    .select-wrap { position: relative; }
+    .select-wrap::after {
+      position: absolute;
+      top: 50%;
+      right: 11px;
+      width: 7px;
+      height: 7px;
+      border-right: 1.5px solid #4f6a82;
+      border-bottom: 1.5px solid #4f6a82;
+      transform: translateY(-70%) rotate(45deg);
+      content: "";
+      pointer-events: none;
+    }
+
+    select {
+      min-width: 94px;
+      min-height: 42px;
+      appearance: none;
+      padding: 8px 30px 8px 12px;
+      border: 1px solid #c4d2de;
+      border-radius: 8px;
+      color: #29465f;
+      background: white;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .button {
+      min-height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 8px 13px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 650;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background-color .16s ease, border-color .16s ease, box-shadow .16s ease;
+    }
+    .button-primary { color: white; background: #087c9e; box-shadow: 0 2px 5px rgb(8 91 120 / 16%); }
+    .button-primary:hover { background: #066985; box-shadow: 0 3px 8px rgb(8 91 120 / 20%); }
+    .button-secondary { border-color: #c7d5e0; color: #294963; background: white; }
+    .button-secondary:hover { border-color: #91bac9; background: #f7fbfd; }
+    .button-quiet { color: #33536d; background: transparent; }
+    .button-quiet:hover { background: #edf4f8; }
+    .button:disabled { color: #7c909f; border-color: #d6e0e7; background: #e9eef2; box-shadow: none; cursor: not-allowed; }
+    .button svg { flex: 0 0 auto; }
+
+    .review-grid { display: grid; grid-template-columns: minmax(0, .97fr) minmax(0, 1.03fr); gap: 16px; align-items: stretch; }
+    .work-panel { min-width: 0; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius-md); background: white; }
+    .panel-head {
+      min-height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 17px;
+      border-bottom: 1px solid var(--line-soft);
+      background: #fbfdfe;
+    }
+    .panel-title { display: flex; align-items: center; gap: 9px; }
+    .panel-title svg { color: #52748e; }
+    .panel-subtitle { margin-top: 1px; color: #50687b; font-size: 12px; }
+    .panel-tools { display: flex; align-items: center; gap: 5px; }
+    .zoom-button {
+      width: 32px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      border: 0;
+      border-radius: 6px;
+      color: #4c687f;
+      background: transparent;
+      cursor: pointer;
+    }
+    .zoom-button:hover { background: #edf3f7; }
+    .zoom-level { min-width: 44px; color: #4f687d; font-size: 12px; text-align: center; font-variant-numeric: tabular-nums; }
+
+    .source-stage {
+      min-height: 535px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      overflow: auto;
+      padding: 24px 22px 30px;
+      background: #eaf0f5;
+    }
+
+    .document-page {
+      width: min(100%, 428px);
+      min-height: 490px;
+      padding: 32px 34px 31px;
+      color: #252b31;
+      background: #fffefa;
+      box-shadow: var(--shadow-paper);
+      transform: scale(var(--paper-scale, 1));
+      transform-origin: top center;
+      font-family: var(--font);
+      font-size: 12px;
+      line-height: 1.68;
+    }
+
+    .document-organization { margin-bottom: 6px; color: #53626b; font-size: 11px; text-align: center; }
+    .document-title { margin: 0 0 12px; color: #232a30; font-size: 19px; font-weight: 700; text-align: center; letter-spacing: -.02em; }
+    .document-row { display: grid; grid-template-columns: 46px 1fr; gap: 6px; margin: 4px 0; }
+    .document-row strong { font-weight: 600; }
+    .document-rule { height: 1px; margin: 9px 0 10px; background: #b9c0c5; }
+    .document-subject { margin: 7px 0 10px; }
+    .document-body p { margin: 0 0 8px; text-indent: 22px; text-align: justify; }
+    .document-body p.no-indent { text-indent: 0; }
+    .document-signoff { margin-top: 8px; text-align: center; }
+    .document-signoff .signature { margin: 10px 0 0; letter-spacing: .16em; }
+    .document-page-number { margin-top: 24px; color: #57636c; text-align: center; font-size: 11px; }
+    .scan-light { color: #59646a; }
+
+    .blank-page {
+      display: flex;
+      min-height: 425px;
+      align-items: center;
+      justify-content: center;
+      color: #c6ccd0;
+      font-size: 12px;
+    }
+
+    .editor-panel { display: flex; flex-direction: column; }
+    .editor-head { align-items: center; }
+    .edit-state {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #516e83;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .edit-state .edit-dot { width: 7px; height: 7px; border-radius: 50%; background: #d49132; }
+    .editor-body { display: flex; flex: 1; flex-direction: column; min-height: 0; padding: 15px 17px 14px; }
+    .editor-hint { margin-bottom: 10px; color: #60798d; font-size: 12px; }
+    .text-editor {
+      width: 100%;
+      flex: 1;
+      min-height: 376px;
+      resize: vertical;
+      padding: 17px 18px;
+      border: 1px solid #d3e0e9;
+      border-radius: 9px;
+      color: #243d53;
+      background: #fff;
+      font-family: var(--font);
+      font-size: 14px;
+      line-height: 1.9;
+      letter-spacing: .005em;
+      caret-color: var(--cyan-700);
+    }
+    .text-editor:hover { border-color: #adc6d3; }
+    .text-editor::placeholder { color: #647d90; opacity: 1; }
+    .editor-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 12px; }
+    .edit-footnote { color: #536b7f; font-size: 12px; }
+    .editor-actions { display: flex; gap: 5px; }
+    .editor-actions .button { min-height: 36px; padding: 6px 9px; font-size: 12px; }
+
+    .page-feedback {
+      flex: 1;
+      min-height: 376px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 29px;
+      border: 1px solid #dbe8e2;
+      border-radius: 9px;
+      background: #fbfefc;
+    }
+    .feedback-icon {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      margin-bottom: 13px;
+      border-radius: 11px;
+      color: var(--green-800);
+      background: var(--green-100);
+    }
+    .page-feedback h3 { margin-bottom: 5px; color: #234b3c; font-size: 16px; }
+    .page-feedback p { max-width: 42ch; margin-bottom: 14px; color: #527263; font-size: 13px; }
+    .feedback-meta { color: #567767; font-size: 12px; }
+    .page-feedback.failed { border-color: #f0d3d0; background: #fffafa; }
+    .page-feedback.failed .feedback-icon { color: var(--red-800); background: var(--red-100); }
+    .page-feedback.failed h3 { color: #763738; }
+    .page-feedback.failed p, .page-feedback.failed .feedback-meta { color: #755457; }
+    .page-feedback.failed .button { margin-top: 5px; }
+
+    .workspace-note {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-top: 13px;
+      color: #465f74;
+      font-size: 12px;
+    }
+    .workspace-note svg { flex: 0 0 auto; color: #65889f; }
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; clip-path: inset(50%); }
+
+    .upload-view { display: none; }
+    .upload-view.is-visible { display: block; }
+    .review-view.is-hidden { display: none; }
+    .upload-intro { max-width: 690px; margin-bottom: 24px; color: #4d6579; font-size: 14px; }
+    .upload-panel { max-width: 810px; padding: 28px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: white; }
+    .upload-panel h2 { margin-bottom: 5px; font-size: 18px; }
+    .upload-copy { margin-bottom: 18px; color: #60798d; font-size: 13px; }
+    .dropzone {
+      min-height: 256px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      border: 1px dashed #80b9c9;
+      border-radius: 13px;
+      background: #f6fcfe;
+      text-align: center;
+      transition: background-color .16s ease, border-color .16s ease;
+    }
+    .dropzone.is-dragging { border-color: var(--cyan-700); background: #e6f8fc; }
+    .upload-icon {
+      width: 48px;
+      height: 48px;
+      display: grid;
+      place-items: center;
+      margin-bottom: 12px;
+      border-radius: 14px;
+      color: #087594;
+      background: #dff4f8;
+    }
+    .dropzone strong { color: var(--ink-900); font-size: 15px; }
+    .dropzone p { margin: 4px 0 14px; color: #4c657a; font-size: 12px; }
+    .choose-file { position: relative; display: inline-flex; }
+    .file-input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); clip-path: inset(50%); white-space: nowrap; }
+    .file-label {
+      min-height: 42px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border: 1px solid #087c9e;
+      border-radius: 8px;
+      color: white;
+      background: #087c9e;
+      font-size: 13px;
+      font-weight: 650;
+      cursor: pointer;
+    }
+    .file-label:hover { background: #066985; }
+    .upload-foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line-soft); }
+    .file-choice { min-width: 0; color: #597388; font-size: 12px; overflow-wrap: anywhere; }
+    .upload-result { min-height: 22px; margin: 13px 0 0; color: #135d75; font-size: 12px; }
+    .upload-guidance { max-width: 760px; margin-top: 18px; color: #4c6579; font-size: 12px; }
+    .upload-guidance strong { color: #35536b; }
+
+    .toast {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      z-index: 5;
+      max-width: min(440px, calc(100vw - 40px));
+      padding: 12px 15px;
+      border: 1px solid #244d67;
+      border-radius: 10px;
+      color: #f5fbff;
+      background: var(--ink-900);
+      box-shadow: 0 8px 22px rgb(0 0 0 / 18%);
+      font-size: 13px;
+      opacity: 0;
+      transform: translateY(8px);
+      pointer-events: none;
+      transition: opacity .18s ease, transform .18s ease;
+    }
+    .toast.is-visible { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 1180px) {
+      .app-shell { grid-template-columns: 218px minmax(0, 1fr); }
+      .content { padding-right: 25px; padding-left: 25px; }
+      .review-grid { grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 12px; }
+      .text-editor { min-height: 350px; }
+      .source-stage { min-height: 509px; padding-right: 16px; padding-left: 16px; }
+    }
+
+    @media (max-width: 940px) {
+      .app-shell { display: block; }
+      .rail { min-height: 0; padding: 12px 18px 10px; }
+      .rail-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+      .brand { padding: 0; }
+      .rail-label, .rail-spacer, .privacy-note { display: none; }
+      .nav-list { display: flex; gap: 5px; }
+      .nav-button { width: auto; min-height: 40px; padding: 7px 10px; font-size: 12px; }
+      .nav-button[aria-current="page"]::before { inset: auto 10px 0; width: auto; height: 2px; border-radius: 2px 2px 0 0; }
+      .nav-hint { display: none; }
+      .topbar { min-height: 62px; }
+      .review-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+      .source-stage { min-height: 495px; }
+      .document-page { padding-right: 25px; padding-left: 25px; font-size: 12px; }
+      .editor-footer { align-items: flex-start; flex-direction: column; }
+    }
+
+    @media (max-width: 700px) {
+      .rail { padding: 10px 12px 0; }
+      .rail-top { align-items: flex-start; flex-direction: column; gap: 8px; }
+      .brand-mark { width: 34px; height: 34px; }
+      .brand-name { font-size: 14px; }
+      .nav-list { width: 100%; overflow-x: auto; padding-bottom: 0; scrollbar-width: none; }
+      .nav-list::-webkit-scrollbar { display: none; }
+      .nav-button { flex: 0 0 auto; min-height: 42px; }
+      .topbar { min-height: 54px; padding: 10px 16px; }
+      .crumbs { font-size: 12px; }
+      .quiet-note { display: none; }
+      .top-actions .button { min-height: 38px; padding: 6px 10px; font-size: 12px; }
+      .content { padding: 17px 14px 28px; }
+      .demo-banner { margin-bottom: 17px; font-size: 11px; }
+      h1 { font-size: 23px; }
+      .title-row { align-items: flex-start; }
+      .title-row > .status-pill { margin-top: 4px; }
+      .file-line { gap: 6px; font-size: 12px; }
+      .progress-block { margin-top: 17px; padding: 13px 12px 12px; }
+      .progress-copy { display: block; margin: 1px 0 0; }
+      .text-button { font-size: 11px; }
+      .track-label { font-size: 11px; }
+      .workspace-toolbar { align-items: stretch; flex-direction: column; gap: 10px; margin-top: 17px; }
+      .selector-group { align-items: flex-start; flex-direction: column; gap: 6px; }
+      .page-tabs { width: 100%; }
+      .page-tab { flex: 1; min-width: 0; }
+      .export-controls { display: grid; grid-template-columns: minmax(85px, auto) 1fr; }
+      .export-controls .button { width: 100%; }
+      .review-grid { grid-template-columns: 1fr; gap: 12px; }
+      .source-stage { min-height: 460px; padding: 17px 12px 22px; }
+      .document-page { min-height: 425px; padding: 26px 23px; font-size: 11px; }
+      .document-title { font-size: 17px; }
+      .text-editor { min-height: 330px; font-size: 13px; }
+      .editor-footer { flex-direction: row; align-items: center; }
+      .edit-footnote { font-size: 11px; }
+      .editor-actions .button { padding: 6px 8px; }
+      .upload-panel { padding: 19px 15px; }
+      .dropzone { min-height: 230px; padding: 18px; }
+      .upload-foot { align-items: stretch; flex-direction: column; }
+      .upload-foot .button { width: 100%; }
+    }
+
+    @media (max-width: 390px) {
+      .page-tab { gap: 4px; padding-right: 5px; padding-left: 5px; font-size: 11px; }
+      .title-row { flex-direction: column; gap: 8px; }
+      .editor-footer { align-items: flex-start; flex-direction: column; }
+      .editor-actions { width: 100%; }
+      .editor-actions .button { flex: 1; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="rail" aria-label="เมนูหลัก">
+      <div class="rail-top">
+        <a class="brand" href="#review-view" data-view-target="review" aria-label="OCR Playground หน้าตรวจเอกสาร">
+          <span class="brand-mark" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6.5 3.75h7l4 4v12.5H6.5z" />
+              <path d="M13.5 3.75v4h4" />
+              <path d="M9 12h6M9 15.5h6" />
+              <path d="M3.5 8.5v7M20.5 8.5v7" stroke="#35c1dc" />
+            </svg>
+          </span>
+          <span><span class="brand-name">OCR Playground</span><span class="brand-note">พื้นที่ทำงานเอกสาร</span></span>
+        </a>
+        <div class="rail-label">พื้นที่ทำงาน</div>
+        <nav aria-label="การทำงาน">
+          <ul class="nav-list">
+            <li>
+              <button class="nav-button" type="button" data-view-target="review" aria-current="page">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3.75h9l5 5v11.5H5z"/><path d="M14 3.75v5h5M8.5 13h7M8.5 16.5h7"/></svg>
+                <span>ตรวจผลเอกสาร</span>
+              </button>
+            </li>
+            <li>
+              <button class="nav-button" type="button" data-view-target="upload">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15.5V4.75M8 8.75l4-4 4 4"/><path d="M5 14.5v4.75h14V14.5"/></svg>
+                <span>อัปโหลดเอกสาร</span>
+              </button>
+            </li>
+          </ul>
+        </nav>
+      </div>
+      <div class="rail-spacer"></div>
+      <div class="privacy-note">
+        <div class="privacy-heading">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5 19 6v5.3c0 4.2-2.8 7.3-7 9.2-4.2-1.9-7-5-7-9.2V6z"/><path d="m9 12 2 2 4-4"/></svg>
+          ข้อความที่แก้ไข
+        </div>
+        <p>เก็บไว้ในหน่วยความจำของแท็บนี้จนกว่าจะปิดหรือเริ่มงานใหม่</p>
+      </div>
+    </aside>
+
+    <div class="main-area">
+      <header class="topbar">
+        <div class="crumbs" aria-label="ตำแหน่งปัจจุบัน">
+          <span>พื้นที่ทำงาน</span>
+          <svg class="crumb-separator" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="m6 3 5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <strong id="breadcrumb-current">ตรวจผลเอกสาร</strong>
+        </div>
+        <div class="top-actions">
+          <span class="quiet-note">ภาษาไทย · English</span>
+          <button class="button button-secondary" type="button" data-view-target="upload">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+            งานใหม่
+          </button>
+        </div>
+      </header>
+
+      <main class="content">
+        <section class="review-view" id="review-view" aria-labelledby="review-title">
+          <div class="demo-banner" role="note">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8h.01"/></svg>
+            <span><strong>ตัวอย่างภาพหน้าจอ</strong> ข้อมูลเอกสารและสถานะเป็นข้อมูลประกอบการออกแบบ ไม่มีการอัปโหลดหรือประมวลผล OCR จริง</span>
+          </div>
+
+          <div class="title-row">
+            <div class="title-copy">
+              <h1 id="review-title">ผลการอ่านข้อความ</h1>
+              <div class="file-line">
+                <span class="file-name">หนังสือเชิญประชุม_ติดตามโครงการ.pdf</span>
+                <span class="dot-separator" aria-hidden="true"></span><span class="file-detail">PDF · 3 หน้า</span>
+              </div>
+            </div>
+            <span class="status-pill"><span class="status-dot" aria-hidden="true"></span>เสร็จบางส่วน</span>
+          </div>
+
+          <section class="progress-block" aria-label="ความคืบหน้าของงาน">
+            <div class="progress-topline">
+              <div><span class="progress-title">ประมวลผลเสร็จแล้ว</span><span class="progress-copy">อ่านสำเร็จ 2 จาก 3 หน้า</span></div>
+              <button class="text-button" type="button" id="details-button">รายละเอียดงาน</button>
+            </div>
+            <div class="page-track" role="progressbar" aria-label="ความคืบหน้าการอ่านเอกสาร" aria-valuemin="0" aria-valuemax="3" aria-valuenow="2">
+              <div class="track-item">
+                <span class="track-mark" aria-hidden="true"><svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="m3.5 8 3 3 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                <span class="track-label"><strong>หน้า 1</strong><br>อ่านข้อความแล้ว</span>
+              </div>
+              <div class="track-item">
+                <span class="track-mark" aria-hidden="true"><svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="m3.5 8 3 3 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                <span class="track-label"><strong>หน้า 2</strong><br>ไม่มีข้อความ</span>
+              </div>
+              <div class="track-item failed">
+                <span class="track-mark" aria-hidden="true"><svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M8 4v4M8 11.3h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+                <span class="track-label"><strong>หน้า 3</strong><br>อ่านไม่สำเร็จ</span>
+              </div>
+            </div>
+          </section>
+
+          <div class="workspace-toolbar">
+            <div class="selector-group">
+              <span class="selector-title">เลือกหน้า</span>
+              <div class="page-tabs" role="group" aria-label="เลือกหน้าที่ต้องการตรวจ">
+                <button class="page-tab" type="button" data-page="0" data-state="success" aria-pressed="true"><span class="tab-indicator" aria-hidden="true"></span>หน้า 1</button>
+                <button class="page-tab" type="button" data-page="1" data-state="blank" aria-pressed="false"><span class="tab-indicator" aria-hidden="true"></span>หน้า 2</button>
+                <button class="page-tab" type="button" data-page="2" data-state="failed" aria-pressed="false"><span class="tab-indicator" aria-hidden="true"></span>หน้า 3</button>
+              </div>
+            </div>
+            <div class="export-controls" aria-label="ดาวน์โหลดผลการอ่าน">
+              <label class="sr-only" for="export-format">รูปแบบไฟล์</label>
+              <span class="select-wrap"><select id="export-format"><option value="txt">ไฟล์ TXT</option><option value="json">ไฟล์ JSON</option></select></span>
+              <button class="button button-primary" type="button" id="download-button">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4.5v10M8 10.5l4 4 4-4"/><path d="M5 15.5v4h14v-4"/></svg>
+                ดาวน์โหลดผลทั้งหมด
+              </button>
+            </div>
+          </div>
+
+          <div class="review-grid">
+            <section class="work-panel" aria-labelledby="source-heading">
+              <div class="panel-head">
+                <div class="panel-title">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3.75h9l5 5v11.5H5z"/><path d="M14 3.75v5h5M8.5 13h7M8.5 16.5h7"/></svg>
+                  <div><h2 id="source-heading">ภาพต้นฉบับ</h2><div class="panel-subtitle" id="source-page-label">หน้า 1 จาก 3</div></div>
+                </div>
+                <div class="panel-tools" aria-label="ปรับขนาดภาพต้นฉบับ">
+                  <button class="zoom-button" type="button" id="zoom-out" aria-label="ย่อภาพ"><svg width="15" height="15" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+                  <span class="zoom-level" id="zoom-level">100%</span>
+                  <button class="zoom-button" type="button" id="zoom-in" aria-label="ขยายภาพ"><svg width="15" height="15" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+                </div>
+              </div>
+              <div class="source-stage" id="source-stage">
+                <article class="document-page" id="document-page" aria-label="ตัวอย่างภาพเอกสารหน้า 1">
+                  <div class="document-organization">สำนักงานประสานงานวิจัยและบริการวิชาการ</div>
+                  <h3 class="document-title">บันทึกข้อความ</h3>
+                  <div class="document-row"><strong>ส่วนงาน</strong><span>งานเลขานุการโครงการ โทร. ๐ ๒ ๕๕๕ ๐๑๘๐</span></div>
+                  <div class="document-row"><strong>ที่</strong><span>วจ. ๐๖๘/๒๕๖๙ <span class="scan-light">　　　　　　　　　</span><strong>วันที่</strong> ๑๘ พฤศจิกายน ๒๕๖๙</span></div>
+                  <div class="document-row"><strong>เรื่อง</strong><span>ขอเชิญประชุมติดตามความก้าวหน้าโครงการวิจัย</span></div>
+                  <div class="document-rule"></div>
+                  <div class="document-row"><strong>เรียน</strong><span>คณะทำงานโครงการ</span></div>
+                  <div class="document-body">
+                    <p>ด้วยฝ่ายเลขานุการกำหนดจัดประชุมติดตามความก้าวหน้าโครงการ ประจำไตรมาสที่ ๔ เพื่อรับทราบผลการดำเนินงานและพิจารณาแผนงานในระยะถัดไป</p>
+                    <p>จึงขอเรียนเชิญท่านเข้าร่วมประชุมในวันพฤหัสบดีที่ ๒๖ พฤศจิกายน ๒๕๖๙ เวลา ๐๙.๓๐–๑๑.๓๐ น. ณ ห้องประชุมชั้น ๓ อาคารอำนวยการ พร้อมนำเสนอข้อมูลความคืบหน้าตามแบบรายงานที่แนบมาด้วย</p>
+                    <p>หากไม่สามารถเข้าร่วมได้ โปรดแจ้งผู้แทนและส่งเอกสารประกอบการประชุมภายในวันที่ ๒๔ พฤศจิกายน ๒๕๖๙</p>
+                    <p class="no-indent">จึงเรียนมาเพื่อโปรดพิจารณาเข้าร่วมประชุมตามวันและเวลาดังกล่าว</p>
+                  </div>
+                  <div class="document-signoff">ขอแสดงความนับถือ<div class="signature">— — — — —</div><div>(กมลชนก วัฒนกิจ)</div><div>ผู้ประสานงานโครงการ</div></div>
+                  <div class="document-page-number">หน้า ๑ / ๓</div>
+                </article>
+              </div>
+            </section>
+
+            <section class="work-panel editor-panel" aria-labelledby="editor-heading">
+              <div class="panel-head editor-head">
+                <div class="panel-title">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4.75h14v14.5H5z"/><path d="M8.5 9h7M8.5 12.5h7M8.5 16h4"/></svg>
+                  <div><h2 id="editor-heading">ข้อความ OCR</h2><div class="panel-subtitle">ตรวจทานและแก้ไขข้อความ</div></div>
+                </div>
+                <span class="edit-state" id="edit-state"><span class="edit-dot" aria-hidden="true"></span><span>แก้ไขแล้ว</span></span>
+              </div>
+              <div class="editor-body" id="editor-body">
+                <label class="editor-hint" for="ocr-text">แก้ไขข้อความในหน้านี้ได้โดยตรง</label>
+                <textarea class="text-editor" id="ocr-text" spellcheck="false">บันทึกข้อความ
+
+ส่วนงาน งานเลขานุการโครงการ โทร. ๐ ๒ ๕๕๕ ๐๑๘๐
+ที่ วจ. ๐๖๘/๒๕๖๙        วันที่ ๑๘ พฤศจิกายน ๒๕๖๙
+เรื่อง ขอเชิญประชุมติดตามความก้าวหน้าโครงการวิจัย
+
+เรียน คณะทำงานโครงการ
+
+ด้วยฝ่ายเลขานุการกำหนดจัดประชุมติดตามความก้าวหน้าโครงการ ประจำไตรมาสที่ ๔ เพื่อรับทราบผลการดำเนินงานและพิจารณาแผนงานในระยะถัดไป
+
+จึงขอเรียนเชิญท่านเข้าร่วมประชุมในวันพฤหัสบดีที่ ๒๖ พฤศจิกายน ๒๕๖๙ เวลา ๐๙.๓๐–๑๑.๓๐ น. ณ ห้องประชุมชั้น ๓ อาคารอำนวยการ พร้อมนำเสนอข้อมูลความคืบหน้าตามแบบรายงานที่แนบมาด้วย
+
+หากไม่สามารถเข้าร่วมได้ โปรดแจ้งผู้แทนและส่งเอกสารประกอบการประชุมภายในวันที่ ๒๔ พฤศจิกายน ๒๕๖๙
+
+จึงเรียนมาเพื่อโปรดพิจารณาเข้าร่วมประชุมตามวันและเวลาดังกล่าว
+
+ขอแสดงความนับถือ
+(กมลชนก วัฒนกิจ)
+ผู้ประสานงานโครงการ</textarea>
+                <div class="editor-footer">
+                  <span class="edit-footnote" id="edit-footnote">แก้ไขจะอยู่ในแท็บนี้จนกว่าจะปิดหรือเริ่มงานใหม่</span>
+                  <div class="editor-actions">
+                    <button class="button button-quiet" type="button" id="copy-button">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="11" height="12" rx="1.5"/><path d="M16 8V5.5A1.5 1.5 0 0 0 14.5 4h-9A1.5 1.5 0 0 0 4 5.5v11A1.5 1.5 0 0 0 5.5 18H8"/></svg>
+                      คัดลอกข้อความ
+                    </button>
+                    <button class="button button-secondary" type="button" id="restore-button">คืนค่า OCR</button>
+                  </div>
+                </div>
+              </div>
+              <div class="editor-body" id="feedback-body" hidden>
+                <div class="page-feedback" id="page-feedback" role="status" aria-live="polite"></div>
+              </div>
+            </section>
+          </div>
+
+          <p class="workspace-note">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8h.01"/></svg>
+            ดาวน์โหลดผลทั้งหมดรวมข้อความที่แก้ไข และระบุหน้าที่อ่านไม่สำเร็จไว้ในไฟล์
+          </p>
+        </section>
+
+        <section class="upload-view" id="upload-view" aria-labelledby="upload-title">
+          <div class="demo-banner" role="note">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8h.01"/></svg>
+            <span><strong>ตัวอย่างภาพหน้าจอ</strong> เลือกไฟล์ได้เพื่อดูสถานะตัวอย่างเท่านั้น ระบบจะไม่ส่งไฟล์ออกจากอุปกรณ์หรือประมวลผล OCR</span>
+          </div>
+          <h1 id="upload-title" tabindex="-1">อัปโหลดเอกสาร</h1>
+          <p class="upload-intro">เลือกไฟล์หนึ่งไฟล์เพื่อเริ่มงาน OCR ในประสบการณ์จริง สามารถตรวจภาพต้นฉบับและแก้ไขข้อความแยกตามหน้าได้ในขั้นถัดไป</p>
+          <section class="upload-panel" aria-labelledby="upload-panel-title">
+            <h2 id="upload-panel-title">เลือกไฟล์ที่ต้องการแปลงข้อความ</h2>
+            <p class="upload-copy">รองรับเอกสารภาพและ PDF · เลือกได้ครั้งละหนึ่งไฟล์</p>
+            <div class="dropzone" id="dropzone">
+              <span class="upload-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15.5V4.75M8 8.75l4-4 4 4"/><path d="M5 14.5v4.75h14V14.5"/></svg></span>
+              <strong>วางไฟล์เอกสารที่นี่</strong>
+              <p>หรือเลือกไฟล์จากอุปกรณ์ของคุณ</p>
+              <span class="choose-file">
+                <input class="file-input" id="file-input" type="file" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf">
+                <label class="file-label" for="file-input">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                  เลือกไฟล์จากอุปกรณ์
+                </label>
+              </span>
+            </div>
+            <div class="upload-foot">
+              <span class="file-choice" id="file-choice">ยังไม่ได้เลือกไฟล์ · JPG, PNG หรือ PDF</span>
+              <button class="button button-primary" type="button" id="start-upload" disabled>
+                เริ่มงาน OCR
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6"/></svg>
+              </button>
+            </div>
+            <p class="upload-result" id="upload-result" aria-live="polite"></p>
+          </section>
+          <p class="upload-guidance"><strong>ก่อนเริ่ม:</strong> เลือกเอกสารที่ภาพชัดและอ่านข้อความได้ครบถ้วน หากมีหลายหน้า ผล OCR และสถานะจะแสดงแยกตามหน้า</p>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (() => {
+      const initialEditorText = document.getElementById("ocr-text").value;
+      const originalTexts = [
+        initialEditorText.replace("พิจารณาแผนงานในระยะถัดไป", "พิจารณาแผนงานระยะถัดไป"),
+        "",
+        null
+      ];
+      const currentTexts = [initialEditorText, "", null];
+      const pageNames = ["หน้า 1", "หน้า 2", "หน้า 3"];
+      const tabs = [...document.querySelectorAll(".page-tab")];
+      const editor = document.getElementById("ocr-text");
+      const editorHint = document.querySelector(".editor-hint");
+      const editorBody = document.getElementById("editor-body");
+      const feedbackBody = document.getElementById("feedback-body");
+      const feedback = document.getElementById("page-feedback");
+      const editState = document.getElementById("edit-state");
+      const restoreButton = document.getElementById("restore-button");
+      const copyButton = document.getElementById("copy-button");
+      const sourcePageLabel = document.getElementById("source-page-label");
+      const documentPage = document.getElementById("document-page");
+      const zoomLevel = document.getElementById("zoom-level");
+      const toast = document.getElementById("toast");
+      let activePage = 0;
+      let zoom = 100;
+      let toastTimer;
+
+      const pageThreeSource = `
+        <div class="document-organization">สำนักงานประสานงานวิจัยและบริการวิชาการ</div>
+        <h3 class="document-title">กำหนดการประชุม</h3>
+        <div class="document-row"><strong>โครงการ</strong><span>ติดตามความก้าวหน้าโครงการวิจัย ประจำปี ๒๕๖๙</span></div>
+        <div class="document-row"><strong>วันเวลา</strong><span>วันพฤหัสบดีที่ ๒๖ พฤศจิกายน ๒๕๖๙ เวลา ๐๙.๓๐ น.</span></div>
+        <div class="document-rule"></div>
+        <div class="document-body">
+          <p class="no-indent"><strong>ระเบียบวาระที่ ๑</strong> แจ้งเพื่อทราบ</p>
+          <p class="no-indent"><strong>ระเบียบวาระที่ ๒</strong> รายงานความก้าวหน้าโครงการ</p>
+          <p class="no-indent"><strong>ระเบียบวาระที่ ๓</strong> พิจารณาแผนการดำเนินงานและกำหนดการส่งรายงานฉบับสมบูรณ์</p>
+          <p class="no-indent"><strong>ระเบียบวาระที่ ๔</strong> เรื่องอื่น ๆ</p>
+        </div>
+        <div class="document-page-number">หน้า ๓ / ๓</div>`;
+
+      function announce(message) {
+        toast.textContent = message;
+        toast.classList.add("is-visible");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove("is-visible"), 3200);
+      }
+
+      function setPage(index) {
+        currentTexts[activePage] = activePage === 0 || activePage === 1 ? editor.value : null;
+        activePage = index;
+        tabs.forEach((tab, tabIndex) => tab.setAttribute("aria-pressed", String(tabIndex === index)));
+        sourcePageLabel.textContent = `${pageNames[index]} จาก 3`;
+        documentPage.setAttribute("aria-label", `ตัวอย่างภาพเอกสาร${pageNames[index]}`);
+        editorBody.hidden = index === 2;
+        feedbackBody.hidden = index !== 2;
+
+        if (index === 0) {
+          documentPage.className = "document-page";
+          documentPage.innerHTML = pageOneMarkup;
+          editor.value = currentTexts[index] ?? originalTexts[index];
+          editor.placeholder = "";
+          editorHint.textContent = "แก้ไขข้อความในหน้านี้ได้โดยตรง";
+          editState.hidden = false;
+          restoreButton.disabled = false;
+          updateEditState();
+        } else if (index === 1) {
+          documentPage.className = "document-page";
+          documentPage.innerHTML = '<div class="blank-page">ไม่มีข้อความบนหน้านี้</div><div class="document-page-number">หน้า ๒ / ๓</div>';
+          editor.value = currentTexts[index] ?? "";
+          editor.placeholder = "พิมพ์ข้อความของหน้านี้ได้ หากต้องการเติมข้อมูล";
+          editorHint.textContent = "อ่านสำเร็จและไม่พบข้อความ · เพิ่มข้อความในหน้านี้ได้";
+          editState.hidden = false;
+          restoreButton.disabled = true;
+          updateEditState();
+        } else {
+          documentPage.className = "document-page";
+          documentPage.innerHTML = pageThreeSource;
+          editState.hidden = true;
+          restoreButton.disabled = true;
+          feedback.className = "page-feedback failed";
+          feedback.innerHTML = `
+            <span class="feedback-icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v5M12 17h.01"/><path d="M10.3 4.8 3.9 16a2 2 0 0 0 1.8 3h12.6a2 2 0 0 0 1.8-3l-6.4-11.2a2 2 0 0 0-3.4 0Z"/></svg></span>
+            <h3>อ่านหน้านี้ไม่สำเร็จ</h3>
+            <p>ไม่มีผล OCR สำหรับหน้านี้ให้แก้ไข ดาวน์โหลดผลทั้งหมดจะแสดงสถานะนี้ไว้เพื่อให้เห็นว่าเอกสารยังไม่ครบ</p>
+            <span class="feedback-meta">สถานะ: ไม่สำเร็จ · ตรวจดูภาพต้นฉบับได้ทางซ้าย</span>`;
+        }
+        documentPage.style.setProperty("--paper-scale", String(zoom / 100));
+      }
+
+      const pageOneMarkup = documentPage.innerHTML;
+
+      function updateEditState() {
+        currentTexts[activePage] = editor.value;
+        const changed = editor.value !== originalTexts[activePage];
+        const label = activePage === 1
+          ? (changed ? "เพิ่มข้อความแล้ว" : "ไม่มีข้อความ")
+          : (changed ? "แก้ไขแล้ว" : "ข้อความต้นฉบับ");
+        const color = changed ? "#d49132" : "#39a879";
+        editState.innerHTML = `<span class="edit-dot" aria-hidden="true" style="background:${color}"></span><span>${label}</span>`;
+      }
+
+      tabs.forEach((tab) => tab.addEventListener("click", () => setPage(Number(tab.dataset.page))));
+      editor.addEventListener("input", updateEditState);
+
+      restoreButton.addEventListener("click", () => {
+        if (activePage !== 0 || editor.value === originalTexts[0]) return;
+        if (window.confirm("คืนค่าข้อความ OCR ต้นฉบับของหน้านี้หรือไม่? การแก้ไขปัจจุบันจะหายไป")) {
+          editor.value = originalTexts[0];
+          updateEditState();
+          announce("คืนค่าข้อความต้นฉบับแล้ว");
+        }
+      });
+
+      copyButton.addEventListener("click", async () => {
+        if (!editor.value) return announce("หน้านี้ไม่มีข้อความให้คัดลอก");
+        try {
+          await navigator.clipboard.writeText(editor.value);
+          announce("คัดลอกข้อความของหน้านี้แล้ว");
+        } catch {
+          editor.focus();
+          editor.select();
+          announce("เลือกข้อความแล้ว กด Ctrl+C หรือ ⌘C เพื่อคัดลอก");
+        }
+      });
+
+      document.getElementById("zoom-out").addEventListener("click", () => setZoom(-10));
+      document.getElementById("zoom-in").addEventListener("click", () => setZoom(10));
+      function setZoom(delta) {
+        zoom = Math.max(80, Math.min(120, zoom + delta));
+        zoomLevel.textContent = `${zoom}%`;
+        documentPage.style.setProperty("--paper-scale", String(zoom / 100));
+      }
+
+      document.getElementById("download-button").addEventListener("click", () => {
+        if (activePage === 0) currentTexts[0] = editor.value;
+        if (activePage === 1) currentTexts[1] = editor.value;
+        const format = document.getElementById("export-format").value;
+        const data = [
+          { page: 1, status: "success", originalOcr: originalTexts[0], editedText: currentTexts[0] ?? originalTexts[0] },
+          { page: 2, status: "success_blank", originalOcr: "", editedText: currentTexts[1] ?? "" },
+          { page: 3, status: "failed", originalOcr: null, editedText: null }
+        ];
+        const contents = format === "json"
+          ? JSON.stringify({ fileName: "หนังสือเชิญประชุม_ติดตามโครงการ.pdf", pages: data }, null, 2)
+          : data.map((page) => page.status === "failed"
+              ? `หน้า ${page.page}\n[อ่านไม่สำเร็จ]`
+              : `หน้า ${page.page}\n${page.editedText}`).join("\n\n");
+        const blob = new Blob([contents], { type: format === "json" ? "application/json;charset=utf-8" : "text/plain;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `ocr-result-demo.${format}`;
+        document.body.append(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+        announce(`ดาวน์โหลดไฟล์ตัวอย่าง ${format.toUpperCase()} แล้ว`);
+      });
+
+      document.getElementById("details-button").addEventListener("click", () => announce("งานเสร็จบางส่วน · อ่านสำเร็จ 2 หน้า · อ่านไม่สำเร็จ 1 หน้า"));
+
+      const reviewView = document.getElementById("review-view");
+      const uploadView = document.getElementById("upload-view");
+      const breadcrumb = document.getElementById("breadcrumb-current");
+      document.querySelectorAll("[data-view-target]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const target = button.dataset.viewTarget;
+          const isUpload = target === "upload";
+          reviewView.classList.toggle("is-hidden", isUpload);
+          uploadView.classList.toggle("is-visible", isUpload);
+          breadcrumb.textContent = isUpload ? "อัปโหลดเอกสาร" : "ตรวจผลเอกสาร";
+          document.querySelectorAll(".nav-button[data-view-target]").forEach((nav) => {
+            if (nav === button || (isUpload && nav.dataset.viewTarget === "upload") || (!isUpload && nav.dataset.viewTarget === "review")) nav.setAttribute("aria-current", "page");
+            else nav.removeAttribute("aria-current");
+          });
+          if (isUpload) document.getElementById("upload-title").focus({ preventScroll: true });
+        });
+      });
+
+      const fileInput = document.getElementById("file-input");
+      const fileChoice = document.getElementById("file-choice");
+      const startUpload = document.getElementById("start-upload");
+      const uploadResult = document.getElementById("upload-result");
+      const dropzone = document.getElementById("dropzone");
+      function acceptFile(file) {
+        if (!file) return;
+        const extension = file.name.split(".").pop().toLowerCase();
+        if (!["jpg", "jpeg", "png", "pdf"].includes(extension)) {
+          fileChoice.textContent = "ไฟล์นี้ไม่รองรับ · เลือก JPG, PNG หรือ PDF";
+          startUpload.disabled = true;
+          uploadResult.textContent = "";
+          return;
+        }
+        fileChoice.textContent = `เลือกแล้ว: ${file.name} · ${(file.size / (1024 * 1024)).toFixed(2)} MB`;
+        startUpload.disabled = false;
+        uploadResult.textContent = "";
+      }
+      fileInput.addEventListener("change", () => {
+        const file = fileInput.files?.[0];
+        if (!file) return;
+        const extension = file.name.split(".").pop().toLowerCase();
+        if (!["jpg", "jpeg", "png", "pdf"].includes(extension)) {
+          fileChoice.textContent = "ไฟล์นี้ไม่รองรับ · เลือก JPG, PNG หรือ PDF";
+          startUpload.disabled = true;
+          return;
+        }
+        fileChoice.textContent = `เลือกแล้ว: ${file.name} · ${(file.size / (1024 * 1024)).toFixed(2)} MB`;
+        startUpload.disabled = false;
+      });
+      ["dragenter", "dragover"].forEach((eventName) => dropzone.addEventListener(eventName, (event) => {
+        event.preventDefault();
+        dropzone.classList.add("is-dragging");
+      }));
+      ["dragleave", "drop"].forEach((eventName) => dropzone.addEventListener(eventName, (event) => {
+        event.preventDefault();
+        dropzone.classList.remove("is-dragging");
+      }));
+      dropzone.addEventListener("drop", (event) => acceptFile(event.dataTransfer.files?.[0]));
+      startUpload.addEventListener("click", () => {
+        uploadResult.textContent = "ไฟล์ถูกเลือกในตัวอย่างนี้เท่านั้น ไม่มีการส่งหรือประมวลผล OCR จริง";
+      });
+    })();
+  </script>
+</body>
+</html>

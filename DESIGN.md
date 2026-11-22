@@ -2,43 +2,43 @@
 
 ## Overview
 
-Status: direction agreed; visual design and implementation are not established. The owner wants a clean, readable work tool with one primary color and clear success/error states; use Impeccable for the later UX/UI design. Source inspected: [frontend plan](docs/frontend-plan.md), [specification](docs/spec.md), and the current repository, which has no UI, assets, components, tokens, screenshots or rendered output.
+**Selected direction: Paperflow (concept C)**, chosen by the owner on 2026-11-22. It balances a clear OCR workspace with a distinctive but quiet portfolio presentation. The [standalone concept](docs/design/concept-c.html) and its [desktop](docs/design/concept-c-desktop.png) and [mobile](docs/design/concept-c-mobile.png) captures are the visual reference; they are illustrative, not a functioning OCR application. No production UI exists yet.
 
-This document follows the [DESIGN.md pattern](https://getdesign.md/what-is-design-md) and [format reference](https://github.com/google-labs-code/design.md/blob/main/docs/spec.md). No token values are recorded until a visual direction is designed and accepted.
+The first screen starts the upload immediately. A three-step indicator makes upload, processing and review legible; the review workspace keeps the page image and editable OCR text together and shows page outcomes without relying on color alone.
 
 ## Colors
 
-Primary, neutral, feedback, contrast and state values are not established. Assign semantic roles and verify contrast during design rather than inferring a palette.
+The chosen concept's starting tokens are below. Validate contrast and state usage in the implemented UI before finalizing them.
+
+| Role | Value |
+| --- | --- |
+| Page ground | `#f1f2fa` |
+| Surface / document paper | `#ffffff` / `#fffefb` |
+| Primary text / secondary text | `#252f4b` / `#495675` |
+| Primary / hover | `#385e98` / `#2c4e83` |
+| Border | `#d8dceb` |
+| Success / success ground | `#34644f` / `#e9f3ed` |
+| Warning / warning ground | `#79501c` / `#fbf3e5` |
+| Error / error ground | `#8b404c` / `#f8ecee` |
 
 ## Typography
 
-Font family, sizes, weights, line height and tracking are not established. Text must support Thai and English; validate readability with actual document content.
+Use a readable Thai/English sans-serif throughout. The mockup uses `Leelawadee UI`, `Tahoma`, `Noto Sans Thai`, `Segoe UI`, then sans-serif; production font availability and licensing remain to be decided. The reference uses a 15px body with 1.55 line height and a 29–39px main heading. Test Thai wrapping and real OCR content rather than treating the sample receipt as a type specimen.
 
 ## Layout
 
-The home surface offers a short introduction and immediate upload. Desktop review places image and text side by side; mobile stacks them. Exact containers, gutters, spacing and breakpoints await design and rendered verification.
+At desktop widths, use a centered shell up to 1440px with 40px side padding in the reference. The upload introduction and drop zone sit side by side; the completed workspace puts the document image and editable text in equal columns. Page thumbnails appear above the workspace, with selected, blank and failed states labeled.
 
-### Responsive and accessible behavior
+### Mobile and accessibility
 
-The whole workflow must work on mobile and desktop, with readable state/error messages and keyboard-operable, labeled controls. Design and verify focus handling, contrast, touch targets and reduced motion with actual UI.
+At 780px and below, stack upload content and the image/text panels; allow the page strip to scroll horizontally. At 520px and below, the reference uses 14px side padding. Captures at 1440px and 500px illustrate the direction; validate narrower viewports, text zoom, touch targets, focus, contrast and reduced motion during implementation. Use accessible labels, keyboard-operable controls and non-color status text.
 
-## Elevation & Depth
+## Elevation, shapes and components
 
-Surface hierarchy, borders and shadows are not established.
+White surfaces, soft lavender grounds and light borders establish hierarchy; reserve shadows for the document preview. The reference uses 14px panel radii, 10px button radii and small pill-shaped status markers. Build project-owned reusable primitives such as button, input, select, textarea, dialog and progress as needed; OCR-specific upload, page selector, viewer and editor compose them.
 
-## Shapes
+## States and acceptance
 
-Radii and border treatments are not established.
+Design and implement upload, queued, processing, completed, partial failure, failed, successful blank page, expiry and recovery. A failed page must never appear as a successful blank page. Preserve in-memory edits across page changes; require confirmation before restore or discarding undownloaded edits; retain the ability to copy edits after expiry. See [product requirements](PRODUCT.md) and [frontend plan](docs/frontend-plan.md) for full behavior.
 
-## Components
-
-Project-owned reusable UI primitives are intended for controls such as button, input, select, textarea, dialog and progress as needed. OCR-specific components compose these primitives. States for upload, queued/processing, successful blank page, failed page, partial result, expiry and recovery must be designed and verified.
-
-## Do's and Don'ts
-
-- Prioritize comparison of source image and text and keep progress and recovery understandable.
-- Do not represent a failed OCR page as a successful blank page.
-
-### Agent usage and visual acceptance
-
-Read this file and [PRODUCT.md](PRODUCT.md) for UI work. Use the project-local Impeccable workflow to establish product context and visual direction; then update this document from accepted decisions and actual implementation. No visual baseline or rendered acceptance evidence exists yet. Inspect desktop and mobile states when UI becomes available.
+The mockup combines different workflow states in one page to show the design. In the actual app, show the correct state at the correct time. File limits, retention and backend responses are not confirmed by the mockup. Verify desktop and mobile against real implementation and accessible interaction states before treating this as production-ready.

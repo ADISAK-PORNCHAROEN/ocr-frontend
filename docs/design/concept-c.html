@@ -1,0 +1,617 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f1f2fa" />
+    <title>Paperflow — OCR Playground</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #252f4b;
+        --ink-soft: #495675;
+        --muted: #4f5f7d;
+        --line: #d8dceb;
+        --line-strong: #c7cde0;
+        --ground: #f1f2fa;
+        --surface: #fff;
+        --surface-soft: #f8f8fc;
+        --lavender: #e9eafa;
+        --lavender-deep: #d9dcf2;
+        --blue: #385e98;
+        --blue-hover: #2c4e83;
+        --blue-pale: #edf3fb;
+        --green: #34644f;
+        --green-pale: #e9f3ed;
+        --amber: #79501c;
+        --amber-pale: #fbf3e5;
+        --red: #8b404c;
+        --red-pale: #f8ecee;
+        --paper: #fffefb;
+        --radius: 14px;
+        --font: "Leelawadee UI", "Tahoma", "Noto Sans Thai", "Segoe UI", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; scroll-padding-top: 24px; }
+      body {
+        margin: 0;
+        background: var(--ground);
+        color: var(--ink);
+        font: 15px/1.55 var(--font);
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+      }
+      ::selection { background: #d6ddf4; color: #202b49; }
+      :focus-visible { outline: 3px solid #587bb5; outline-offset: 3px; }
+      button, textarea { font: inherit; }
+      button { color: inherit; }
+      svg { display: block; }
+      a { color: var(--blue); text-underline-offset: 3px; }
+      .skip-link {
+        position: fixed; z-index: 10; top: 8px; left: 8px; transform: translateY(-150%);
+        padding: 10px 14px; border-radius: 8px; background: var(--ink); color: #fff;
+      }
+      .skip-link:focus { transform: translateY(0); }
+      .page-shell { max-width: 1440px; margin: 0 auto; padding: 0 40px 76px; }
+
+      .topbar {
+        min-height: 78px; display: flex; align-items: center; justify-content: space-between;
+        gap: 24px; border-bottom: 1px solid var(--line); margin-bottom: 26px;
+      }
+      .brand, .brand-lockup, .top-actions, .top-nav { display: flex; align-items: center; }
+      .brand { min-width: 0; gap: 14px; }
+      .brand-lockup { gap: 11px; color: var(--ink); text-decoration: none; }
+      .brand-mark {
+        display: grid; width: 36px; height: 36px; place-items: center; border-radius: 11px;
+        background: var(--lavender-deep); color: #3e548a;
+      }
+      .brand-name { font-size: 15px; font-weight: 750; letter-spacing: -.02em; white-space: nowrap; }
+      .concept-tag {
+        padding: 5px 9px; border-radius: 999px; background: #e6e7f3; color: #4c587c;
+        font-size: 12px; font-weight: 700; letter-spacing: .045em; white-space: nowrap;
+      }
+      .top-actions { gap: 26px; }
+      .top-nav { gap: 23px; }
+      .top-nav a { color: var(--ink-soft); font-size: 13px; font-weight: 650; text-decoration: none; }
+      .top-nav a:hover { color: var(--blue); text-decoration: underline; }
+      .static-note {
+        display: flex; align-items: center; gap: 9px; width: fit-content; margin: 0 0 22px;
+        padding: 8px 12px; border: 1px solid #d4d8e9; border-radius: 10px;
+        background: rgba(255,255,255,.6); color: var(--ink-soft); font-size: 12px;
+      }
+      .static-note svg { color: #52668f; flex: none; }
+
+      .section-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 22px; }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 { max-width: 730px; margin-bottom: 8px; font-size: clamp(29px, 3.1vw, 39px); line-height: 1.24; letter-spacing: -.032em; }
+      h2 { margin: 0; font-size: clamp(24px, 2.1vw, 30px); line-height: 1.25; letter-spacing: -.027em; }
+      h3 { margin-bottom: 0; }
+      .lead { max-width: 64ch; margin-bottom: 0; color: var(--ink-soft); font-size: 16px; }
+      .upload-section { padding: 15px 0 60px; }
+
+      .workflow { margin-top: 28px; padding: 17px 22px 16px; border: 1px solid var(--line); border-radius: var(--radius); background: rgba(255,255,255,.74); }
+      .workflow-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; list-style: none; margin: 0; padding: 0; }
+      .workflow-step { position: relative; display: flex; align-items: center; gap: 10px; min-width: 0; color: #626e8a; font-size: 13px; font-weight: 650; }
+      .workflow-step:not(:last-child)::after {
+        content: ""; position: absolute; top: 50%; left: calc(100% - 4px); width: 16px;
+        height: 1px; background: var(--line-strong);
+      }
+      .step-number {
+        display: grid; width: 25px; height: 25px; flex: none; place-items: center;
+        border: 1px solid var(--line-strong); border-radius: 50%; background: #fff; color: var(--muted);
+        font-size: 11px; font-variant-numeric: tabular-nums;
+      }
+      .workflow-step.is-done { color: var(--green); }
+      .workflow-step.is-done .step-number { border-color: #bdd6c6; background: var(--green-pale); color: var(--green); }
+      .workflow-step[aria-current="step"] { color: var(--blue); }
+      .workflow-step[aria-current="step"] .step-number { border-color: var(--blue); background: var(--blue); color: #fff; }
+      .workflow-foot { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 13px; color: var(--muted); font-size: 12px; }
+      .workflow-foot strong { color: var(--ink-soft); font-weight: 650; }
+      .progress-track { height: 4px; margin-top: 12px; overflow: hidden; border-radius: 99px; background: #e8eaf3; }
+      .progress-track span { display: block; width: 0; height: 100%; border-radius: inherit; background: var(--blue); }
+      .workflow.is-complete .progress-track span { width: 100%; background: #6587b6; }
+
+      .upload-panel {
+        display: grid; grid-template-columns: minmax(240px, .82fr) minmax(380px, 1.18fr);
+        gap: clamp(28px, 5vw, 76px); align-items: center; margin-top: 20px; padding: clamp(24px, 3.1vw, 42px);
+        border: 1px solid var(--line); border-radius: 18px; background: var(--surface);
+      }
+      .upload-copy h2 { margin-bottom: 10px; font-size: 22px; }
+      .upload-copy p { max-width: 44ch; margin: 0; color: var(--ink-soft); font-size: 14px; }
+      .upload-facts { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 20px; color: var(--muted); font-size: 12px; }
+      .upload-facts span { display: inline-flex; align-items: center; gap: 6px; }
+      .upload-facts svg { color: #526a9a; }
+      .dropzone {
+        display: flex; min-height: 205px; flex-direction: column; align-items: center; justify-content: center;
+        padding: 24px; border: 1.5px dashed #adb7d0; border-radius: 14px; background: #fafaff;
+        text-align: center;
+      }
+      .upload-icon {
+        display: grid; width: 46px; height: 46px; place-items: center; margin-bottom: 12px;
+        border-radius: 14px; background: var(--lavender); color: #465d95;
+      }
+      .dropzone strong { font-size: 15px; font-weight: 700; }
+      .dropzone p { margin: 3px 0 13px; color: var(--muted); font-size: 12px; }
+      .button {
+        display: inline-flex; min-height: 40px; align-items: center; justify-content: center; gap: 8px;
+        padding: 9px 14px; border: 1px solid transparent; border-radius: 10px;
+        background: var(--blue); color: #fff; font-size: 13px; font-weight: 700;
+        text-decoration: none; cursor: pointer;
+      }
+      .button:hover { background: var(--blue-hover); }
+      .button:active { transform: translateY(1px); }
+      .button-secondary { border-color: var(--line-strong); background: #fff; color: var(--ink-soft); }
+      .button-secondary:hover { border-color: #9eabc8; background: #f9faff; color: var(--ink); }
+      .button-quiet { min-height: 36px; padding: 7px 10px; border-color: transparent; background: transparent; color: var(--blue); }
+      .button-quiet:hover { background: var(--blue-pale); color: var(--blue-hover); }
+      .button-small { min-height: 34px; padding: 6px 10px; font-size: 12px; }
+
+      .section-divider { display: flex; align-items: center; gap: 16px; margin: 3px 0 30px; color: #52617f; font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+      .section-divider::before, .section-divider::after { content: ""; height: 1px; flex: 1; background: var(--line); }
+      .review-section { scroll-margin-top: 20px; }
+      .review-heading { align-items: center; margin-bottom: 18px; }
+      .review-heading .heading-copy p { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
+      .status-chip {
+        display: inline-flex; align-items: center; gap: 7px; padding: 7px 11px; border-radius: 999px;
+        background: var(--amber-pale); color: var(--amber); font-size: 12px; font-weight: 700; white-space: nowrap;
+      }
+      .status-chip svg { flex: none; }
+      .job-bar {
+        display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 17px 20px;
+        border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface);
+      }
+      .job-info { display: flex; align-items: center; gap: 13px; min-width: 0; }
+      .file-mark { display: grid; width: 42px; height: 46px; flex: none; place-items: center; border-radius: 8px; background: var(--blue-pale); color: #46628e; }
+      .job-name { overflow: hidden; margin: 0; font-size: 14px; font-weight: 720; text-overflow: ellipsis; white-space: nowrap; }
+      .job-meta { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 3px 0 0; color: var(--muted); font-size: 12px; }
+      .job-meta span + span { position: relative; }
+      .job-meta span + span::before { content: "·"; position: absolute; left: -8px; color: #8791a9; }
+      .job-actions { display: flex; align-items: center; gap: 8px; flex: none; }
+      .workflow-review { margin-top: 15px; padding: 16px 20px 13px; background: rgba(255,255,255,.68); }
+      .workflow-review .workflow-foot { margin-top: 11px; }
+
+      .pages-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 25px 0 11px; }
+      .pages-heading h3 { font-size: 14px; font-weight: 700; }
+      .pages-heading span { color: var(--muted); font-size: 12px; }
+      .page-strip { display: grid; grid-template-columns: repeat(4, minmax(125px, 1fr)); gap: 11px; }
+      .page-thumb {
+        display: grid; grid-template-columns: 59px 1fr; align-items: center; gap: 12px; min-width: 0;
+        padding: 10px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.78);
+        text-align: left; cursor: pointer;
+      }
+      .page-thumb:hover { border-color: #aeb9d2; background: #fff; }
+      .page-thumb[aria-current="page"] { border-color: #8296bd; background: #fff; box-shadow: 0 2px 9px rgba(53,73,116,.09); }
+      .mini-paper {
+        display: flex; width: 59px; height: 74px; flex-direction: column; gap: 4px; overflow: hidden;
+        padding: 7px 5px; border: 1px solid #e5e3de; background: var(--paper); color: #4c5870;
+        box-shadow: 0 2px 4px rgba(45,51,72,.06); font-size: 5px; line-height: 1.3;
+      }
+      .mini-paper strong { display: block; margin-bottom: 2px; color: #3d4860; font-size: 5.5px; }
+      .mini-paper i { display: block; height: 2px; border-radius: 2px; background: #e1e4ec; font-style: normal; }
+      .mini-paper .short { width: 55%; }
+      .mini-paper .mini-amount { height: auto; margin-top: 3px; color: #485772; font-size: 5px; font-weight: 700; text-align: right; }
+      .mini-empty { align-items: center; justify-content: center; color: #a1a9b8; font-size: 8px; }
+      .mini-empty::after { content: ""; width: 20px; height: 1px; background: #d4d8e1; }
+      .mini-failed { align-items: center; justify-content: center; border-color: #e5cfd3; background: #fdf8f8; color: #9a6570; font-size: 8px; }
+      .thumb-copy { min-width: 0; }
+      .thumb-page { display: block; margin-bottom: 3px; color: var(--ink); font-size: 12px; font-weight: 750; font-variant-numeric: tabular-nums; }
+      .thumb-state { display: block; overflow: hidden; color: var(--muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+      .thumb-state.good { color: var(--green); }
+      .thumb-state.empty { color: #56688f; }
+      .thumb-state.failed { color: var(--red); }
+
+      .workspace {
+        display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 15px; align-items: stretch;
+        margin-top: 16px;
+      }
+      .work-panel { min-width: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 15px; background: var(--surface); }
+      .panel-head { display: flex; min-height: 58px; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 16px; border-bottom: 1px solid var(--line); }
+      .panel-title { display: flex; align-items: center; gap: 9px; min-width: 0; font-size: 13px; font-weight: 720; }
+      .panel-title svg { flex: none; color: #5b6d93; }
+      .panel-subtitle { color: var(--muted); font-size: 12px; font-weight: 500; }
+      .panel-tools { display: flex; align-items: center; gap: 5px; flex: none; }
+      .tool-button { display: inline-grid; width: 31px; height: 31px; place-items: center; border: 1px solid transparent; border-radius: 8px; background: transparent; color: var(--ink-soft); cursor: pointer; }
+      .tool-button:hover { border-color: var(--line); background: var(--surface-soft); }
+      .tool-label { padding: 5px 8px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--ink-soft); font-size: 12px; font-variant-numeric: tabular-nums; }
+      .source-stage {
+        display: grid; min-height: 572px; place-items: center; padding: 28px;
+        background: #f0f1f7;
+      }
+      .scan-page {
+        width: min(100%, 405px); min-height: 526px; padding: 30px 34px 25px; background: var(--paper);
+        box-shadow: 0 8px 22px rgba(47,56,82,.13); color: #343a48;
+        font-family: var(--font); font-size: 12px; line-height: 1.5;
+      }
+      .scan-brand { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding-bottom: 13px; border-bottom: 1px solid #d8d8d6; }
+      .scan-brand small { display: block; color: #606879; font-size: 12px; letter-spacing: .04em; }
+      .scan-brand strong { display: block; margin-top: 2px; font-size: 13px; font-weight: 750; }
+      .receipt-label { text-align: right; }
+      .receipt-label b { display: block; font-size: 13px; }
+      .receipt-label span { color: #606879; font-size: 12px; letter-spacing: .04em; }
+      .receipt-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 7px 16px; padding: 12px 0 13px; border-bottom: 1px solid #e2e1de; }
+      .receipt-meta div:last-child { grid-column: 1 / -1; }
+      .receipt-meta span { display: block; color: #606879; font-size: 12px; }
+      .receipt-meta strong { display: block; margin-top: 1px; font-size: 12px; font-weight: 650; }
+      .receipt-table { width: 100%; margin-top: 13px; border-collapse: collapse; font-size: 12px; }
+      .receipt-table th { padding: 6px 0; border-bottom: 1px solid #d4d4d1; color: #596276; font-size: 12px; font-weight: 650; text-align: left; }
+      .receipt-table th:last-child, .receipt-table td:last-child { text-align: right; }
+      .receipt-table td { padding: 8px 0; border-bottom: 1px solid #eeedea; vertical-align: top; }
+      .receipt-table td:first-child { padding-right: 8px; }
+      .receipt-table td:last-child { white-space: nowrap; }
+      .receipt-summary { width: 62%; margin: 12px 0 0 auto; font-size: 12px; }
+      .receipt-summary div { display: flex; justify-content: space-between; gap: 10px; padding: 3px 0; }
+      .receipt-summary .total { margin-top: 4px; padding-top: 7px; border-top: 1px solid #d4d4d1; color: #2d3544; font-size: 12px; font-weight: 750; }
+      .receipt-paid { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 18px; padding: 9px 10px; border: 1px solid #dce3da; color: #3e664e; font-size: 12px; }
+      .receipt-paid strong { font-size: 12px; }
+      .receipt-foot { margin-top: 13px; color: #626979; font-size: 10px; text-align: center; }
+
+      .editor-panel { display: flex; min-height: 632px; flex-direction: column; }
+      .editor-title-wrap { min-width: 0; }
+      .editor-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .editor-status { display: inline-flex; align-items: center; gap: 5px; margin-left: 3px; color: var(--green); font-size: 12px; font-weight: 650; white-space: nowrap; }
+      .editor-area-wrap { display: flex; flex: 1; min-height: 0; flex-direction: column; padding: 13px 15px 0; }
+      .editor-label { margin-bottom: 8px; color: var(--muted); font-size: 12px; font-weight: 650; }
+      .editor-text {
+        width: 100%; flex: 1; min-height: 440px; resize: vertical; padding: 15px 16px;
+        border: 1px solid #d5dae7; border-radius: 10px; background: #fff; color: #27324e;
+        font-size: 14px; line-height: 1.85; tab-size: 2;
+      }
+      .editor-text:focus { border-color: #6681b1; outline: 3px solid rgba(84,116,171,.16); }
+      .editor-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 16px 15px; color: var(--muted); font-size: 12px; }
+      .edit-state { display: inline-flex; align-items: center; gap: 7px; }
+      .edit-dot { width: 7px; height: 7px; border-radius: 50%; background: #b68037; }
+      .editor-actions { display: flex; align-items: center; gap: 5px; }
+
+      .partial-result {
+        display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-top: 15px;
+        padding: 15px 18px; border: 1px solid #e8d7b9; border-radius: 13px; background: #fffaf1;
+      }
+      .partial-copy { display: flex; align-items: flex-start; gap: 11px; min-width: 0; }
+      .partial-copy svg { flex: none; margin-top: 2px; color: var(--amber); }
+      .partial-copy strong { display: block; margin-bottom: 2px; color: #61451e; font-size: 13px; }
+      .partial-copy p { max-width: 76ch; margin: 0; color: #705a37; font-size: 12px; }
+      .download-actions { display: flex; flex: none; gap: 7px; }
+      .download-actions .button-secondary { border-color: #dfccaa; background: #fffdfa; color: #674d27; }
+      .download-actions .button-secondary:hover { background: #fff4dd; }
+      .closing-note { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-top: 27px; padding-top: 14px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+      .closing-note span { display: inline-flex; align-items: center; gap: 7px; }
+      .closing-note svg { flex: none; color: #566a92; }
+
+      @media (max-width: 1050px) {
+        .page-shell { padding-right: 26px; padding-left: 26px; }
+        .page-strip { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        .page-thumb { grid-template-columns: 50px 1fr; gap: 9px; padding: 8px; }
+        .mini-paper { width: 50px; height: 67px; }
+        .source-stage { min-height: 540px; padding: 20px; }
+        .scan-page { min-height: 500px; padding: 25px 26px 21px; }
+        .editor-panel { min-height: 600px; }
+      }
+      @media (max-width: 780px) {
+        .page-shell { padding-right: 18px; padding-left: 18px; }
+        .topbar { min-height: 69px; margin-bottom: 20px; }
+        .top-nav { gap: 14px; }
+        .top-nav a { font-size: 12px; }
+        .top-actions { gap: 17px; }
+        .concept-tag { display: none; }
+        .upload-panel { grid-template-columns: 1fr; gap: 22px; }
+        .upload-copy h2 { font-size: 20px; }
+        .workflow { padding-right: 16px; padding-left: 16px; }
+        .workflow-step { gap: 7px; font-size: 12px; }
+        .workflow-step:not(:last-child)::after { width: 10px; }
+        .workflow-review { margin-top: 12px; }
+        .job-bar { align-items: flex-start; }
+        .job-actions { flex-wrap: wrap; justify-content: flex-end; }
+        .page-strip { grid-template-columns: repeat(4, minmax(130px, 1fr)); overflow-x: auto; padding: 1px 1px 8px; scrollbar-color: #aeb8d0 #e8eaf3; scrollbar-width: thin; }
+        .workspace { grid-template-columns: 1fr; gap: 12px; }
+        .source-stage { min-height: 0; padding: 24px; }
+        .scan-page { width: min(100%, 410px); min-height: 520px; padding: 30px 34px 24px; }
+        .editor-panel { min-height: 540px; }
+        .editor-text { min-height: 380px; }
+        .partial-result { align-items: flex-start; flex-direction: column; }
+      }
+      @media (max-width: 520px) {
+        body { font-size: 14px; }
+        .page-shell { padding: 0 14px 42px; }
+        .topbar { min-height: 62px; gap: 10px; }
+        .brand { gap: 0; }
+        .brand-mark { width: 32px; height: 32px; border-radius: 10px; }
+        .brand-name { font-size: 13px; }
+        .top-actions { gap: 12px; }
+        .top-nav { gap: 12px; }
+        .top-nav a { font-size: 12px; }
+        .static-note { align-items: flex-start; width: 100%; margin-bottom: 20px; font-size: 12px; }
+        .section-heading { align-items: flex-start; flex-direction: column; }
+        h1 { max-width: 12ch; font-size: 30px; }
+        .lead { font-size: 14px; }
+        .upload-section { padding-top: 5px; padding-bottom: 42px; }
+        .workflow { margin-top: 21px; padding: 14px 12px 12px; }
+        .workflow-steps { gap: 4px; }
+        .workflow-step { flex-direction: column; align-items: flex-start; gap: 5px; font-size: 12px; line-height: 1.3; }
+        .workflow-step:not(:last-child)::after { top: 12px; left: 27px; width: calc(100% - 29px); }
+        .workflow-foot { align-items: flex-start; flex-direction: column; gap: 3px; font-size: 12px; }
+        .upload-panel { gap: 20px; margin-top: 14px; padding: 20px 16px; border-radius: 15px; }
+        .upload-copy h2 { margin-bottom: 6px; font-size: 18px; }
+        .upload-copy p { font-size: 13px; }
+        .upload-facts { gap: 7px 12px; margin-top: 14px; font-size: 12px; }
+        .dropzone { min-height: 188px; padding: 17px 12px; }
+        .section-divider { margin: 0 0 24px; font-size: 12px; }
+        .review-heading { gap: 10px; margin-bottom: 14px; }
+        h2 { font-size: 24px; }
+        .review-heading .heading-copy p { font-size: 12px; }
+        .status-chip { padding: 6px 9px; font-size: 12px; }
+        .job-bar { flex-direction: column; gap: 13px; padding: 14px; }
+        .job-info { width: 100%; gap: 10px; }
+        .file-mark { width: 36px; height: 40px; }
+        .job-name { font-size: 13px; }
+        .job-meta { font-size: 12px; }
+        .job-actions { width: 100%; justify-content: flex-start; }
+        .job-actions .button { flex: 1; }
+        .workflow-review { padding: 13px 12px 11px; }
+        .pages-heading { align-items: flex-start; flex-direction: column; gap: 2px; margin-top: 20px; }
+        .pages-heading h3 { font-size: 13px; }
+        .page-strip { grid-template-columns: repeat(4, 148px); gap: 8px; margin-right: -14px; padding-right: 14px; }
+        .page-thumb { grid-template-columns: 46px 1fr; }
+        .mini-paper { width: 46px; height: 62px; }
+        .workspace { margin-top: 8px; }
+        .panel-head { min-height: 54px; padding: 9px 11px; }
+        .panel-title { gap: 7px; font-size: 12px; }
+        .panel-subtitle { display: none; }
+        .source-stage { padding: 16px 12px; }
+        .scan-page { min-height: 0; padding: 21px 19px 18px; font-size: 12px; }
+        .scan-brand strong { font-size: 12px; }
+        .receipt-table { font-size: 12px; }
+        .receipt-table th { font-size: 12px; }
+        .receipt-table td { padding: 7px 0; }
+        .editor-panel { min-height: 0; }
+        .editor-area-wrap { padding: 11px 10px 0; }
+        .editor-text { min-height: 330px; padding: 12px; font-size: 13px; }
+        .editor-footer { align-items: flex-start; flex-direction: column; padding: 10px 12px 13px; }
+        .partial-result { gap: 13px; padding: 13px; }
+        .partial-copy p { font-size: 12px; }
+        .download-actions { width: 100%; }
+        .download-actions .button { flex: 1; }
+        .closing-note { align-items: flex-start; flex-direction: column; gap: 7px; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
+      }
+    </style>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">ข้ามไปยังเนื้อหาหลัก</a>
+    <div class="page-shell">
+      <header class="topbar">
+        <div class="brand">
+          <a class="brand-lockup" href="#upload" aria-label="OCR Playground, เริ่มใช้งาน">
+            <span class="brand-mark" aria-hidden="true">
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 3.75h8l4 4v12.5H6z"/><path d="M14 3.75v4h4M9 12h6M9 15h6"/>
+              </svg>
+            </span>
+            <span class="brand-name">OCR Playground</span>
+          </a>
+          <span class="concept-tag">PAPERFLOW · CONCEPT C</span>
+        </div>
+        <div class="top-actions">
+          <nav class="top-nav" aria-label="ทางลัดในตัวอย่าง">
+            <a href="#upload">เริ่มใช้งาน</a>
+            <a href="#review">พื้นที่ตรวจผล</a>
+          </nav>
+        </div>
+      </header>
+
+      <main id="main">
+        <p class="static-note" role="note">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+          ตัวอย่างหน้าจอแบบภาพนิ่ง · ข้อมูลประกอบการออกแบบ · ปุ่มยังไม่เชื่อมต่อ OCR หรือดาวน์โหลด
+        </p>
+
+        <section class="upload-section" id="upload" aria-labelledby="upload-title">
+          <div class="section-heading">
+            <div>
+              <h1 id="upload-title">เริ่มจากเอกสารหนึ่งไฟล์</h1>
+              <p class="lead">อัปโหลดภาพหรือ PDF แล้วตรวจข้อความ OCR เทียบกับภาพต้นฉบับได้ทีละหน้า</p>
+            </div>
+          </div>
+
+          <div class="workflow" aria-label="ขั้นตอนการทำงาน: กำลังอัปโหลดเอกสาร">
+            <ol class="workflow-steps">
+              <li class="workflow-step" aria-current="step"><span class="step-number">1</span><span>อัปโหลดเอกสาร</span></li>
+              <li class="workflow-step"><span class="step-number">2</span><span>ประมวลผล OCR</span></li>
+              <li class="workflow-step"><span class="step-number">3</span><span>ตรวจและส่งออก</span></li>
+            </ol>
+          </div>
+
+          <div class="upload-panel">
+            <div class="upload-copy">
+              <h2>นำเอกสารเข้ามาเริ่มงาน</h2>
+              <p>เลือกไฟล์ JPG, PNG หรือ PDF หนึ่งไฟล์ ระบบจะแสดงความคืบหน้าและผลลัพธ์แยกตามหน้า</p>
+              <div class="upload-facts" aria-label="ชนิดไฟล์ที่รองรับ">
+                <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="8.5" cy="9" r="1.4"/><path d="m5 17 4.5-4.5 3 3 2.5-2.5 4 4"/></svg>JPG และ PNG</span>
+                <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5h8l4 4v13H6z"/><path d="M14 3.5v4h4M8.5 13h7M8.5 16h7"/></svg>PDF หลายหน้า</span>
+                <span>ครั้งละ 1 ไฟล์</span>
+              </div>
+            </div>
+            <div class="dropzone" aria-label="พื้นที่สำหรับเลือกไฟล์เอกสาร ตัวอย่างภาพนิ่ง">
+              <span class="upload-icon" aria-hidden="true">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4m0 0L8 8m4-4 4 4"/><path d="M5 14v5.5h14V14"/></svg>
+              </span>
+              <strong>วางไฟล์เอกสารที่นี่</strong>
+              <p>หรือเลือกจากอุปกรณ์ของคุณ</p>
+              <button class="button" type="button" aria-label="เลือกไฟล์ (ตัวอย่างปุ่มที่ยังไม่เชื่อมต่อ)">เลือกไฟล์</button>
+            </div>
+          </div>
+        </section>
+
+        <div class="section-divider" aria-hidden="true"><span>ตัวอย่างเมื่อประมวลผลเสร็จ</span></div>
+
+        <section class="review-section" id="review" aria-labelledby="review-title">
+          <div class="section-heading review-heading">
+            <div class="heading-copy">
+              <h2 id="review-title">ตรวจผล OCR ทีละหน้า</h2>
+              <p>เปรียบเทียบภาพต้นฉบับ แก้ข้อความ และเลือกส่งออกผลลัพธ์</p>
+            </div>
+            <span class="status-chip">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5 21 20H3z"/><path d="M12 9v5M12 17h.01"/></svg>
+              สำเร็จบางส่วน
+            </span>
+          </div>
+
+          <div class="job-bar">
+            <div class="job-info">
+              <span class="file-mark" aria-hidden="true">
+                <svg width="21" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 3.5h8l5 5v12h-13z"/><path d="M13.5 3.5v5h5M8.5 13h7M8.5 16h7"/></svg>
+              </span>
+              <div style="min-width:0">
+                <p class="job-name">ใบเสร็จและรายการซื้อ_พฤศจิกายน.pdf</p>
+                <p class="job-meta"><span>PDF</span><span>4 หน้า</span><span>3 หน้าสำเร็จ</span><span>1 หน้าล้มเหลว</span></p>
+              </div>
+            </div>
+            <div class="job-actions">
+              <button class="button button-secondary button-small" type="button">เริ่มงานใหม่</button>
+              <button class="button button-quiet button-small" type="button">จบงาน</button>
+            </div>
+          </div>
+
+          <div class="workflow workflow-review is-complete" aria-label="สถานะงาน: ประมวลผลครบ 4 จาก 4 หน้า">
+            <ol class="workflow-steps">
+              <li class="workflow-step is-done"><span class="step-number" aria-label="เสร็จแล้ว">
+                <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 10 4 4 8-8"/></svg>
+              </span><span>อัปโหลด</span></li>
+              <li class="workflow-step is-done"><span class="step-number" aria-label="เสร็จแล้ว">
+                <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 10 4 4 8-8"/></svg>
+              </span><span>ประมวลผล OCR</span></li>
+              <li class="workflow-step" aria-current="step"><span class="step-number">3</span><span>ตรวจและส่งออก</span></li>
+            </ol>
+            <div class="workflow-foot"><strong>ประมวลผลครบแล้ว · 4 จาก 4 หน้า</strong><span>พร้อมตรวจผลทีละหน้า</span></div>
+            <div class="progress-track" role="progressbar" aria-label="ความคืบหน้าการประมวลผล" aria-valuemin="0" aria-valuemax="4" aria-valuenow="4"><span></span></div>
+          </div>
+
+          <div class="pages-heading">
+            <h3>หน้าในเอกสาร</h3>
+            <span>เลือกหน้าเพื่อดูภาพและข้อความ OCR</span>
+          </div>
+          <nav class="page-strip" aria-label="เลือกหน้าที่ต้องการตรวจ">
+            <button class="page-thumb" type="button" aria-label="หน้า 1, อ่านสำเร็จ">
+              <span class="mini-paper" aria-hidden="true"><strong>บันทึกการสั่งซื้อ</strong><i></i><i></i><i class="short"></i><i></i><i class="short"></i><i></i><i></i></span>
+              <span class="thumb-copy"><span class="thumb-page">หน้า 1</span><span class="thumb-state good">อ่านสำเร็จ</span></span>
+            </button>
+            <button class="page-thumb" type="button" aria-current="page" aria-label="หน้า 2, อ่านสำเร็จ, หน้าที่เลือกอยู่">
+              <span class="mini-paper" aria-hidden="true"><strong>ใบเสร็จรับเงิน</strong><i></i><i class="short"></i><i></i><i></i><i class="mini-amount">รวม 431.21</i></span>
+              <span class="thumb-copy"><span class="thumb-page">หน้า 2</span><span class="thumb-state good">อ่านสำเร็จ · กำลังตรวจ</span></span>
+            </button>
+            <button class="page-thumb" type="button" aria-label="หน้า 3, ไม่พบข้อความ">
+              <span class="mini-paper mini-empty" aria-hidden="true">หน้าว่าง</span>
+              <span class="thumb-copy"><span class="thumb-page">หน้า 3</span><span class="thumb-state empty">ไม่พบข้อความ</span></span>
+            </button>
+            <button class="page-thumb" type="button" aria-label="หน้า 4, อ่านไม่สำเร็จ">
+              <span class="mini-paper mini-failed" aria-hidden="true">เปิดดู</span>
+              <span class="thumb-copy"><span class="thumb-page">หน้า 4</span><span class="thumb-state failed">อ่านไม่สำเร็จ</span></span>
+            </button>
+          </nav>
+
+          <div class="workspace">
+            <section class="work-panel" aria-labelledby="source-title">
+              <div class="panel-head">
+                <div class="panel-title" id="source-title">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.75h8l4 4v12.5H6z"/><path d="M14 3.75v4h4M9 12h6M9 15h6"/></svg>
+                  <span>ภาพต้นฉบับ</span><span class="panel-subtitle">หน้า 2 จาก 4</span>
+                </div>
+                <div class="panel-tools" aria-label="เครื่องมือดูภาพ">
+                  <button class="tool-button" type="button" aria-label="ย่อภาพ"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+                  <span class="tool-label" aria-label="ขนาดภาพ 100 เปอร์เซ็นต์">100%</span>
+                  <button class="tool-button" type="button" aria-label="ขยายภาพ"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+                </div>
+              </div>
+              <div class="source-stage">
+                <article class="scan-page" role="img" aria-label="ภาพตัวอย่างใบเสร็จรับเงิน ร้านบ้านหนังสือ เชียงใหม่">
+                  <div class="scan-brand">
+                    <div><small>BAAN NANGSEU · CHIANG MAI</small><strong>ร้านบ้านหนังสือ เชียงใหม่</strong><small>ถนนนิมมานเหมินท์ อำเภอเมือง เชียงใหม่</small></div>
+                    <div class="receipt-label"><b>ใบเสร็จรับเงิน</b><span>RECEIPT</span></div>
+                  </div>
+                  <div class="receipt-meta">
+                    <div><span>เลขที่เอกสาร</span><strong>RC-260118</strong></div>
+                    <div><span>วันที่</span><strong>18 พฤศจิกายน 2569</strong></div>
+                    <div><span>ชื่อลูกค้า</span><strong>คุณศิริพร วัฒนกิจ</strong></div>
+                  </div>
+                  <table class="receipt-table" aria-label="รายการสินค้าในใบเสร็จ">
+                    <thead><tr><th>รายการ</th><th>จำนวน</th><th>ราคา</th></tr></thead>
+                    <tbody>
+                      <tr><td>กระดาษถ่ายเอกสาร A4 80 แกรม</td><td>2 รีม</td><td>280.00</td></tr>
+                      <tr><td>ปากกาลูกลื่น หมึกน้ำเงิน 0.5 มม.</td><td>3 ด้าม</td><td>75.00</td></tr>
+                      <tr><td>แฟ้มเอกสารสันกว้าง</td><td>1 เล่ม</td><td>48.00</td></tr>
+                    </tbody>
+                  </table>
+                  <div class="receipt-summary">
+                    <div><span>รวมสินค้า</span><span>403.00</span></div>
+                    <div><span>ภาษีมูลค่าเพิ่ม 7%</span><span>28.21</span></div>
+                    <div class="total"><span>ยอดสุทธิ</span><span>431.21 บาท</span></div>
+                  </div>
+                  <div class="receipt-paid"><span>ชำระเงินแล้ว</span><strong>พร้อมเพย์ · 431.21 บาท</strong></div>
+                  <p class="receipt-foot">ขอบคุณที่ใช้บริการ · เอกสารตัวอย่างประกอบการออกแบบ</p>
+                </article>
+              </div>
+            </section>
+
+            <section class="work-panel editor-panel" aria-labelledby="editor-title">
+              <div class="panel-head">
+                <div class="panel-title editor-title-wrap">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5h4l11-11a2.1 2.1 0 0 0-4-4l-11 11z"/><path d="M13.5 6.5 17.5 10.5"/></svg>
+                  <span class="editor-title" id="editor-title">ผล OCR ที่แก้ไขได้</span>
+                  <span class="panel-subtitle">· หน้า 2</span>
+                </div>
+                <span class="editor-status">
+                  <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 10 4 4 8-8"/></svg>
+                  อ่านสำเร็จ
+                </span>
+              </div>
+              <div class="editor-area-wrap">
+                <label class="editor-label" for="ocr-text">ข้อความของหน้านี้</label>
+                <textarea class="editor-text" id="ocr-text" spellcheck="false">ร้านบ้านหนังสือ เชียงใหม่
+ถนนนิมมานเหมินท์ อำเภอเมือง เชียงใหม่
+
+ใบเสร็จรับเงิน
+เลขที่เอกสาร: RC-260118
+วันที่: 18 พฤศจิกายน 2569
+ชื่อลูกค้า: คุณศิริพร วัฒนกิจ
+
+กระดาษถ่ายเอกสาร A4 80 แกรม  2 รีม  280.00
+ปากกาลูกลื่น หมึกน้ำเงิน 0.5 มม.  3 ด้าม  75.00
+แฟ้มเอกสารสันกว้าง  1 เล่ม  48.00
+
+รวมสินค้า 403.00 บาท
+ภาษีมูลค่าเพิ่ม 7% 28.21 บาท
+ยอดสุทธิ 431.21 บาท
+ชำระเงินแล้ว · พร้อมเพย์</textarea>
+              </div>
+              <div class="editor-footer">
+                <span class="edit-state"><i class="edit-dot" aria-hidden="true"></i>ตัวอย่างข้อความที่แก้ไขแล้ว · เก็บไว้ในเซสชันนี้</span>
+                <div class="editor-actions">
+                  <button class="button button-quiet button-small" type="button" aria-label="คัดลอกข้อความหน้า 2">คัดลอกหน้า</button>
+                  <button class="button button-secondary button-small" type="button" aria-label="คืนค่าข้อความ OCR ต้นฉบับหน้า 2">คืนค่าต้นฉบับ</button>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <aside class="partial-result" aria-label="คำเตือนผลลัพธ์บางส่วน">
+            <div class="partial-copy">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5 21 20H3z"/><path d="M12 9v5M12 17h.01"/></svg>
+              <div><strong>งานนี้มีหน้าที่อ่านไม่สำเร็จ</strong><p>หน้า 4 ไม่มีข้อความ OCR · ไฟล์ส่งออกจะแสดงหมายเลขและสถานะของหน้านี้ เพื่อให้เห็นว่าผลยังไม่ครบ</p></div>
+            </div>
+            <div class="download-actions" aria-label="ดาวน์โหลดผลลัพธ์">
+              <button class="button button-secondary button-small" type="button">ดาวน์โหลด TXT</button>
+              <button class="button button-secondary button-small" type="button">ดาวน์โหลด JSON</button>
+            </div>
+          </aside>
+
+          <footer class="closing-note">
+            <span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>ข้อความที่แก้ไขอยู่ในหน่วยความจำของเซสชันนี้</span>
+            <span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M5 17v3h14v-3"/></svg>ดาวน์โหลด TXT หรือ JSON</span>
+          </footer>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
