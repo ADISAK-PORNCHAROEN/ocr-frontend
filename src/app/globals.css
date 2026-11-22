@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+:root {
+	--page-ground: #f1f2fa;
+	--surface: #ffffff;
+	--document-paper: #fffefb;
+	--text-primary: #252f4b;
+	--text-secondary: #495675;
+	--action: #385e98;
+	--action-hover: #2c4e83;
+	--border: #d8dceb;
+	--success: #34644f;
+	--success-ground: #e9f3ed;
+	--warning: #79501c;
+	--warning-ground: #fbf3e5;
+	--error: #8b404c;
+	--error-ground: #f8ecee;
+	--font-thai: "Leelawadee UI", Tahoma, "Noto Sans Thai", "Segoe UI", sans-serif;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+html {
+	background: var(--page-ground);
+	scroll-behavior: smooth;
+}
+
+body {
+	margin: 0;
+	background: var(--page-ground);
+	color: var(--text-primary);
+	font-family: var(--font-thai);
+	font-size: 15px;
+	line-height: 1.55;
+}
+
+button,
+input,
+select,
+textarea {
+	font: inherit;
+}
+
+::selection {
+	background: #dbe4f6;
+	color: #20365f;
+}
+
+:focus-visible {
+	outline: 3px solid #6385bd;
+	outline-offset: 3px;
+}
+
+.skip-link {
+	position: absolute;
+	top: 0.75rem;
+	left: 0.75rem;
+	z-index: 10;
+	transform: translateY(-180%);
+	border-radius: 0.5rem;
+	background: var(--surface);
+	padding: 0.65rem 0.9rem;
+	color: var(--text-primary);
+}
+
+.skip-link:focus {
+	transform: translateY(0);
+}

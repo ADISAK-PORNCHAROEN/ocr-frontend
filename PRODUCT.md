@@ -5,8 +5,8 @@
 | Type | Evidence |
 | --- | --- |
 | Owner-approved direction | [Frontend plan](docs/frontend-plan.md) and the design conversation: local-first portfolio demo, Next.js, mobile support and Thai UI first. |
-| Source observation | No application, package manifest, rendered screens or test suite exist yet; this repository currently contains planning documents. |
-| Pending confirmation | The browser/backend-fixture test seam remains proposed; the backend API, limits and expiry remain proposals. The spec and tasks have been published as [GitHub issues](https://github.com/ADISAK-PORNCHAROEN/ocr-frontend/issues). |
+| Source observation | The Next.js shell and browser test harness are scaffolded on `develop`; the OCR workflow and BFF are still being implemented. |
+| Pending confirmation | The browser/backend-fixture seam is accepted in Issue #3 and the HTTP fixture is scaffolded. The companion backend source is uncommitted and its runtime, limits and expiry are not verified. The spec and tasks are tracked in [GitHub issues](https://github.com/ADISAK-PORNCHAROEN/ocr-frontend/issues). |
 
 ## Users and purpose
 

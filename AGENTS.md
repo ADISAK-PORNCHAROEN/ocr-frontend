@@ -1,6 +1,6 @@
 # OCR Playground Agent Guide
 
-OCR Playground is a planned local-first web interface for OCR jobs. The frontend and its backend contract are not implemented yet.
+OCR Playground is a local-first web interface for OCR jobs. The Next.js shell and verification harness are scaffolded; the OCR workflow and BFF are still being implemented. The companion backend source is changing and its runtime contract is not yet verified.
 
 ## Working agreements
 
@@ -27,3 +27,13 @@ OCR Playground is a planned local-first web interface for OCR jobs. The frontend
 ## Completion
 
 Run checks appropriate to the change and report actual results, remaining gaps and any unverified behavior. Follow the project testing and security review routes for application changes. Preserve unrelated changes.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+## This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

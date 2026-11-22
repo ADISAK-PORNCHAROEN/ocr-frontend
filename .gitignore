@@ -1,3 +1,10 @@
 /graphify-out/
 /.env.local
 !/.env.example
+/node_modules/
+/.next/
+/out/
+/coverage/
+/playwright-report/
+/test-results/
+*.tsbuildinfo

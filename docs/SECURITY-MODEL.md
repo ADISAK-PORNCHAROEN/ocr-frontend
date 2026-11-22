@@ -1,6 +1,6 @@
 # Security model
 
-Status: proposed model based on [frontend plan](frontend-plan.md); no application source, security controls or runtime verification exists. The first version is for use on the owner's machine, not public deployment.
+Status: proposed model based on [frontend plan](frontend-plan.md); the Next.js shell exists, while OCR application controls and runtime verification are still in progress. The first version is for use on the owner's machine, not public deployment.
 
 ## Boundaries and data
 

@@ -1,7 +1,8 @@
 # Testing
 
-Status: accepted testing strategy; the application and test harness are being
-scaffolded on `develop`. No test run or coverage baseline exists yet.
+Status: accepted testing strategy; the Next.js shell and harness are scaffolded
+on `develop`. One Playwright home-page smoke test passes; feature behavior and
+coverage baselines are not yet established.
 
 ## Selection and evidence
 
