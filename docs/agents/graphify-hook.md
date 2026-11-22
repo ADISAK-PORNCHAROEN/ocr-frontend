@@ -32,12 +32,19 @@ from graphify import hooks
 
 hook = hooks._HOOK_SCRIPT.replace("__PINNED_PYTHON__", hooks._pinned_python())
 hook = hook.replace("__VIZ_LIMIT_EXPORT__", "")
+hook = hook.replace(' -c "$_GFY_PROBE"', ' -I -c "$_GFY_PROBE"')
+hook = hook.replace('"$GRAPHIFY_PYTHON" -c "import os, subprocess, sys',
+                    '"$GRAPHIFY_PYTHON" -I -c "import os, subprocess, sys')
+hook = hook.replace("_cmd = [sys.executable, '-c', _src]",
+                    "_cmd = [sys.executable, '-I', '-c', _src]")
 print(hooks._install_hook(
     Path(".git/hooks"), "post-commit", hook,
     hooks._HOOK_MARKER, hooks._HOOK_MARKER_END,
 ))
-'@ | .git/graphify-venv/Scripts/python.exe -
+'@ | .git/graphify-venv/Scripts/python.exe -I -
 ```
+
+The `-I` adaptations run Python probes, the launcher, and the detached worker in isolated mode so a repository-root `graphify.py` or `graphify` package cannot shadow the installed package. Run the installation command itself with `python.exe -I -` as well when working in an untrusted checkout. Isolated mode ignores Python environment variables, including `PYTHONHASHSEED`; do not assume the upstream hook's hash-seed setting takes effect.
 
 Inspect the resulting hook and check status:
 
@@ -46,10 +53,12 @@ Get-Content -LiteralPath .git/hooks/post-commit
 .git/graphify-venv/Scripts/graphify.exe hook status
 ```
 
-Expected for this setup: post-commit installed, post-checkout not installed, and merge driver not registered. Status confirms configuration, not execution. To remove this setup, inspect the hook first and remove only its Graphify block, preserving any other hook content. The isolated environment can be removed separately once no hook uses its interpreter. Recreate the hook after moving or reinstalling that environment because it pins the interpreter path.
+Expected for this setup: post-commit installed, post-checkout not installed, and merge driver not registered. Status may label post-commit “out of date” because the isolated-mode hardening differs from upstream; do not run the suggested installer blindly, since it can overwrite that hardening and install other integrations. Status confirms configuration, not execution. To remove this setup, inspect the hook first and remove only its Graphify block, preserving any other hook content. The isolated environment can be removed separately once no hook uses its interpreter. Recreate the hook after moving or reinstalling that environment because it pins the interpreter path.
 
 ## Behavior and verification
 
 After a qualifying commit, the hook launches an asynchronous Graphify rebuild and writes its log to the user's `.cache/graphify-rebuild.log`. The commit can finish before the graph does; inspect the log and generated `graphify-out` after it completes. The upstream hook extracts **code only**; Markdown and other semantic content require a separate Graphify update using the project skill. It also skips certain Git operations and respects `GRAPHIFY_SKIP_HOOK=1`. Generated graph output is not automatically included in the commit that triggered it.
 
 During setup, a separate temporary Git repository was given the same hook, then a real commit changed a Python file. The hook launched a rebuild and produced `graph.json`, `graph.html` and `GRAPH_REPORT.md` with 3 nodes and 2 edges. This establishes behavior for that test, not automatic installation or behavior in other checkouts. Confirm the log and graph after a qualifying commit in each checkout.
+
+After adding isolated mode, another temporary repository contained a root-level `graphify.py` that would create a marker if imported. A real commit rebuilt the graph with 5 nodes and 3 edges; the marker was absent. This exercises the isolated hook against that shadowing case.
