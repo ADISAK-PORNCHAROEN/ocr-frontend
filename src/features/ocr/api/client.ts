@@ -1,4 +1,6 @@
 import {
+	type Capabilities,
+	capabilitiesWireSchema,
 	type Job,
 	jobWireSchema,
 	mapJob,
@@ -49,9 +51,7 @@ async function jsonRequest<T>(
 		let body: ApiErrorBody = {};
 		try {
 			body = (await response.json()) as ApiErrorBody;
-		} catch {
-			// Use a safe fallback when the backend response is not JSON.
-		}
+		} catch {}
 		const error = body.error;
 		throw new OcrRequestError(
 			typeof error?.message === "string" ? error.message : "บริการ OCR ตอบกลับด้วยข้อผิดพลาด",
@@ -89,6 +89,12 @@ export async function createJob(file: File, signal?: AbortSignal): Promise<Job> 
 		jobWireSchema.parse(body),
 	);
 	return mapJob(wire);
+}
+
+export async function getCapabilities(signal?: AbortSignal): Promise<Capabilities> {
+	return jsonRequest("/api/ocr/capabilities", { method: "GET", signal }, (body) =>
+		capabilitiesWireSchema.parse(body),
+	);
 }
 
 export async function getJob(jobId: string, signal?: AbortSignal): Promise<Job> {
@@ -144,9 +150,7 @@ export async function deleteJob(jobId: string, signal?: AbortSignal): Promise<vo
 		let body: ApiErrorBody = {};
 		try {
 			body = (await response.json()) as ApiErrorBody;
-		} catch {
-			// Keep a safe fallback message.
-		}
+		} catch {}
 		throw new OcrRequestError(
 			typeof body.error?.message === "string" ? body.error.message : "ลบงานไม่สำเร็จ",
 			{

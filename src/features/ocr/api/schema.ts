@@ -41,6 +41,8 @@ export const capabilitiesWireSchema = z.object({
 	model_revision: z.string(),
 });
 
+export type Capabilities = z.infer<typeof capabilitiesWireSchema>;
+
 const lineWireSchema = z.object({
 	text: z.string(),
 	confidence: z.number().min(0).max(1),

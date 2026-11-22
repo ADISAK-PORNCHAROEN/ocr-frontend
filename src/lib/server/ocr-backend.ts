@@ -1,6 +1,6 @@
 import "server-only";
 
-const UPSTREAM_TIMEOUT_MS = 60_000;
+const DEFAULT_UPSTREAM_TIMEOUT_MS = 60_000;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const PAGE_NUMBER = /^[1-9]\d{0,5}$/;
 
@@ -82,6 +82,22 @@ function errorResponse(status: number, code: string, message: string, retryable:
 	);
 }
 
+function hasAllowedMutationOrigin(request: Request) {
+	const origin = request.headers.get("origin");
+	if (!origin) return false;
+	const configuredOrigins =
+		process.env.OCR_APP_ORIGINS ?? "http://localhost:3000,http://127.0.0.1:3000";
+	const allowedOrigins = configuredOrigins.split(",").flatMap((value) => {
+		const candidate = value.trim();
+		try {
+			return new URL(candidate).origin === candidate ? [candidate] : [];
+		} catch {
+			return [];
+		}
+	});
+	return allowedOrigins.includes(origin);
+}
+
 export async function forwardOcrRequest(request: Request, segments: string[]) {
 	const route = resolveRoute(segments);
 	if (!route) {
@@ -89,6 +105,12 @@ export async function forwardOcrRequest(request: Request, segments: string[]) {
 	}
 	if (!route.methods.includes(request.method)) {
 		return errorResponse(405, "METHOD_NOT_ALLOWED", "ไม่รองรับวิธีส่งคำขอนี้", false);
+	}
+	if (
+		(request.method === "POST" || request.method === "DELETE") &&
+		!hasAllowedMutationOrigin(request)
+	) {
+		return errorResponse(403, "ORIGIN_NOT_ALLOWED", "ไม่อนุญาตให้ส่งคำขอจากเว็บไซต์นี้", false);
 	}
 
 	let target: URL;
@@ -103,7 +125,14 @@ export async function forwardOcrRequest(request: Request, segments: string[]) {
 		);
 	}
 
-	const timeoutSignal = AbortSignal.timeout(UPSTREAM_TIMEOUT_MS);
+	const configuredTimeout = Number(process.env.OCR_BACKEND_TIMEOUT_MS);
+	const timeoutMs =
+		Number.isSafeInteger(configuredTimeout) &&
+		configuredTimeout > 0 &&
+		configuredTimeout <= 2_147_483_647
+			? configuredTimeout
+			: DEFAULT_UPSTREAM_TIMEOUT_MS;
+	const timeoutSignal = AbortSignal.timeout(timeoutMs);
 	const signal = AbortSignal.any([request.signal, timeoutSignal]);
 	const headers = new Headers({ accept: request.headers.get("accept") ?? "application/json" });
 	const contentType = request.headers.get("content-type");

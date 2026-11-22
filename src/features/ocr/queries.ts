@@ -1,4 +1,4 @@
-import { getJob, getPage, getPages } from "./api/client";
+import { getCapabilities, getJob, getPage, getPages } from "./api/client";
 
 export const ocrKeys = {
 	all: ["ocr"] as const,
@@ -8,6 +8,10 @@ export const ocrKeys = {
 };
 
 export const ocrQueries = {
+	capabilities: () => ({
+		queryKey: [...ocrKeys.all, "capabilities"] as const,
+		queryFn: ({ signal }: { signal: AbortSignal }) => getCapabilities(signal),
+	}),
 	job: (jobId: string) => ({
 		queryKey: ocrKeys.job(jobId),
 		queryFn: ({ signal }: { signal: AbortSignal }) => getJob(jobId, signal),

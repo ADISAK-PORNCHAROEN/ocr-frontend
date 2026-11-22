@@ -3,6 +3,9 @@
 !/.env.example
 /node_modules/
 /.next/
+/.next-e2e/
+/.next-live/
+/next-env.d.ts
 /out/
 /coverage/
 /playwright-report/
