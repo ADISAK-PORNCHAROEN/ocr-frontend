@@ -1,11 +1,11 @@
 # ร่าง tickets: OCR Playground
 
-ตัวเลขใน Blocked by อ้างถึง ticket ในเอกสารนี้ และจะเปลี่ยนเป็น GitHub issue หลังอนุมัติ
+เผยแพร่เป็น GitHub issues แล้ว: [spec #3](https://github.com/ADISAK-PORNCHAROEN/ocr-frontend/issues/3) และ [งาน #4–#9](https://github.com/ADISAK-PORNCHAROEN/ocr-frontend/issues). ตัวเลขใน Blocked by ด้านล่างอ้างถึงลำดับในเอกสารนี้; GitHub issues เป็นแหล่งติดตามสถานะและ dependencies ปัจจุบัน
 
 ## 1. ออกแบบประสบการณ์ OCR และเริ่มอัปโหลดงาน
 **Blocked by:** ไม่มี
 
-**What to build:** ออกแบบด้วย impeccable และสร้างหน้า Next.js responsive ภาษาไทยที่เลือก JPG, PNG หรือ PDF และส่งสร้างงานผ่าน BFF ไปยัง backend fixture ได้
+**What to build:** สร้างหน้า Next.js responsive ภาษาไทยตามแบบ Paperflow (C) ที่เลือกแล้ว ให้เลือก JPG, PNG หรือ PDF และส่งสร้างงานผ่าน BFF ไปยัง backend fixture ได้
 
 **Acceptance criteria:**
 - [ ] UI ใช้ keyboard และมือถือได้ และแจ้งไฟล์ที่ไม่รองรับหรือ backend ปฏิเสธ

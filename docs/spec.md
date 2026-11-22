@@ -38,7 +38,7 @@
 
 ## Implementation Decisions
 
-- Use Next.js App Router, React, TypeScript and Tailwind CSS; use project-owned reusable accessible UI primitives, without shadcn/ui initially. Apply impeccable to UX/UI design.
+- Use Next.js App Router, React, TypeScript and Tailwind CSS; use project-owned reusable accessible UI primitives, without shadcn/ui initially. The owner selected the Paperflow (concept C) visual direction for desktop and mobile.
 - A thin Next.js BFF forwards browser requests to the separate OCR backend, preserving the backend contract and reporting connection errors. Test multipart and binary forwarding, timeouts and cancellation.
 - TanStack Query owns backend data and polling; an OCR session owns current page and in-memory edits. Original OCR data remains unchanged. Ignore stale async results from older jobs.
 - Validate external API responses at the boundary; use native fetch and Zod. Keep backend wire details behind the OCR API boundary.
