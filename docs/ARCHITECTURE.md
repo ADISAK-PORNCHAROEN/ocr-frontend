@@ -1,10 +1,10 @@
 # Frontend architecture
 
-Status: Issues #4–#9 are implemented and their acceptance checks passed on
-`develop`. The local fixture suite and browser run through the BFF to the real
-local backend covered upload, status, page images, OCR text, TXT and JSON
-exports, failure limits, expiry, and deletion. Issue #3 remains the product
-specification. The implementation PR is not merged.
+Status: Issues #4–#9 were merged to `main` through PR #10 after their acceptance
+checks passed on `develop`. The local fixture suite and browser run through the
+BFF to the real local backend covered upload, status, page images, OCR text,
+TXT and JSON exports, failure limits, expiry, and deletion. Issue #3 remains
+the product specification.
 
 ## Runtime boundaries
 
@@ -179,7 +179,7 @@ order without restating their criteria.
 - [x] Implement confirmation, DELETE recovery, and expiry behavior for #8.
 - [x] Verify the current real backend against #9 and record the limits.
 - [x] Run unit, browser, lint, type, production-build, and dependency checks.
-- [ ] Open a PR from `develop` and leave it unmerged until the owner asks.
+- [x] Merge the approved design through PR #2 and the implementation through PR #10.
 
 **Throughput checkpoint.** Blocking first steps are the issue audit, backend
 schema inspection, branch check, and test-harness setup. The implementation is
