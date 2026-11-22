@@ -1,10 +1,29 @@
-# pstack models
+# OCR Playground Agent Guide
 
-For pstack roles in this project, these choices override user-level pstack model settings. In Codex, pass `model` and `reasoning_effort` separately. Use only `gpt-6-luna` with `xhigh` or `max`, or `gpt-6.1-sol` with `medium`.
+OCR Playground is a planned local-first web interface for OCR jobs. The frontend and its backend contract are not implemented yet.
 
-- `gpt-6-luna`, `xhigh`: feature, refactoring, bug-fix, reflect tooling, swarm workers.
-- `gpt-6-luna`, `xhigh`: perf-issue, hillclimb, arena runners, architect runners.
-- `gpt-6-luna`, `max`: hardest tasks.
-- `gpt-6.1-sol`, `medium`: judgment and prose, how explorer, how explainer, why investigators, why synthesizer, reflect judgment, divergent, synthesizer, arena cross-judge pool, interrogate reviewers.
+## Working agreements
 
-Panel lists contain one entry each. If a requested model or effort is unavailable, ask the user before choosing another.
+- Make small, coherent commits that each represent a reviewable change. Use a branch and open a pull request for every change merged into `main`.
+- Preserve existing work, and keep secrets and user documents out of Git. Do not invent backend behavior or unapproved product decisions.
+- For pstack roles in this project, override user-level settings. In Codex pass model and reasoning effort separately: `gpt-6-luna` with `xhigh` for feature, refactoring, bug-fix, perf-issue, hillclimb, reflect tooling, swarm workers, arena runners and architect runners; `gpt-6-luna` with `max` for hardest tasks; `gpt-6.1-sol` with `medium` for judgment and prose, how explorer, how explainer, why investigators, why synthesizer, reflect judgment, divergent, synthesizer, arena cross-judge pool and interrogate reviewers. Panel lists contain one entry each. Ask before substituting an unavailable model or effort.
+
+## Find the source
+
+- For relevant codebase or content discovery, use `.agents/skills/graphify/SKILL.md` when its CLI is available. Check graph freshness and confirm findings against source; if unavailable, report the gap and use targeted search.
+- The accepted plan and draft spec are in `docs/frontend-plan.md` and `docs/spec.md`; the backend contract remains proposed and belongs to the separate backend project.
+
+## Read by task
+
+| Task | Read first |
+| --- | --- |
+| Product behavior and terminology | `PRODUCT.md`, `CONTEXT.md`, `docs/spec.md` |
+| UI design | `DESIGN.md` and `.agents/skills/impeccable/SKILL.md`; do not download its separate engine without an explicit request |
+| Architecture or API | `docs/ARCHITECTURE.md` and the backend's current contract |
+| Behavior or test changes | `docs/TESTING.md` and `.agents/skills/test-engineering/SKILL.md` |
+| Code, dependency, executable configuration or CI changes | `.agents/skills/security-review/SKILL.md` and `docs/SECURITY-MODEL.md` |
+| Hook changes explicitly requested by the user | `.agents/skills/hook-management/SKILL.md`; establish host, scope, event and behavior first |
+
+## Completion
+
+Run checks appropriate to the change and report actual results, remaining gaps and any unverified behavior. Follow the project testing and security review routes for application changes. Preserve unrelated changes.
