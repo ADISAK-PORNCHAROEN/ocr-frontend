@@ -46,9 +46,10 @@ tests/
 ```
 
 Server responses start as `unknown` and are parsed by Zod in the OCR API
-boundary. Components receive frontend domain values, not FastAPI field names.
-The session reducer owns only the selected page, page drafts and edit revision.
-TanStack Query remains the sole owner of server snapshots.
+boundary. Components receive frontend domain values, not FastAPI field names;
+capabilities are narrowed to the upload UI's media types and limits at that
+boundary. The session reducer owns only the selected page, page drafts and edit
+revision. TanStack Query remains the sole owner of server snapshots.
 
 ```ts
 type PageDetail =
@@ -130,7 +131,9 @@ including pages the user has not opened, before it creates a file.
    text and metadata.
 5. Restart and finish warn before discarding unsaved edits, then request DELETE.
    A failed delete offers retry or continue. A missing or expired job keeps the
-   in-memory drafts available for copying and disables complete export.
+   in-memory drafts available for copying and prevents complete export. If a
+   page-list refetch returns 404, a recovery view exposes every edited page from
+   session state and allows copying them together.
 6. Refresh and tab close never persist drafts. `beforeunload` warns when the
    current revision differs from the last downloaded revision. It does not try
    to delete a backend job.
