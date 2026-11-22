@@ -1,0 +1,172 @@
+{
+  "version": 1,
+  "documents": [
+    "AGENTS.md",
+    "CLAUDE.md",
+    "PRODUCT.md",
+    "CONTEXT.md",
+    "DESIGN.md",
+    "SECURITY.md",
+    "docs/AI-FOUNDATION-REPORT.md",
+    "docs/agents/document-delivery.md",
+    "docs/agents/skills-checklist.md",
+    ".agents/skills/test-engineering/references/testing-contract.md",
+    ".agents/skills/security-review/references/review-contract.md",
+    ".agents/skills/hook-management/references/hook-change-contract.md",
+    ".agents/skills/impeccable/SKILL.md",
+    ".agents/skills/impeccable/agents/openai.yaml",
+    ".agents/skills/impeccable/reference/hooks.md",
+    "docs/ARCHITECTURE.md",
+    "docs/TESTING.md",
+    "docs/SECURITY-MODEL.md",
+    "docs/frontend-plan.md",
+    "docs/spec.md",
+    "docs/ticket-draft.md",
+    "docs/history/agent-instructions/README.md",
+    "docs/history/agent-instructions/AGENTS.2026-11-22-930a3ccfb6f8.md",
+    "docs/agents/graphify-hook.md",
+    ".gitignore",
+    ".gitattributes"
+  ],
+  "instructions": {
+    "format": "foundation-v1",
+    "guide": "AGENTS.md",
+    "bridge": "CLAUDE.md",
+    "mode": "replaced",
+    "managedBlocks": [],
+    "historyIndex": "docs/history/agent-instructions/README.md",
+    "archives": [
+      {
+        "source": "AGENTS.md",
+        "archive": "docs/history/agent-instructions/AGENTS.2026-11-22-930a3ccfb6f8.md",
+        "sha256": "930a3ccfb6f89488edd1e05126a87f7a88fc068ad381d0ad804ec252e5880f08"
+      }
+    ]
+  },
+  "skillPaths": [
+    ".agents/skills/test-engineering",
+    ".agents/skills/security-review",
+    ".agents/skills/graphify",
+    ".agents/skills/hook-management",
+    ".agents/skills/impeccable"
+  ],
+  "requiredSkills": [
+    "test-engineering",
+    "security-review",
+    "graphify",
+    "hook-management",
+    "impeccable"
+  ],
+  "skillInventory": [
+    {
+      "name": "test-engineering",
+      "scope": "project",
+      "source": "Foundation bundled assets/project-skills/test-engineering; pre-install content snapshot",
+      "sourceRevision": "sha256:48ab7a5135418971cc6e79b2bdc61e35008cde8c4fe7d1b99d7f5a57c0dd4bb5 (pre-install package inventory)",
+      "sourceFileCount": 2,
+      "sourceInventorySha256": "48ab7a5135418971cc6e79b2bdc61e35008cde8c4fe7d1b99d7f5a57c0dd4bb5",
+      "path": ".agents/skills/test-engineering",
+      "invocationPolicy": "On behavior changes and test authoring",
+      "installed": true,
+      "installedFileCount": 2,
+      "installedInventorySha256": "ee450cab84ec7806af050281ca9466f7dfd9ebbcc799aa5b3ec484617cdcfbae",
+      "missingFiles": [],
+      "changedFiles": [
+        "references/testing-contract.md"
+      ],
+      "addedFiles": [],
+      "approvedChanges": [
+        {
+          "path": "references/testing-contract.md",
+          "reason": "Map source guidance to this project’s documented proposed OCR boundaries, testing and current absence of implementation."
+        }
+      ],
+      "inventoryVerified": true,
+      "discoverable": "verified in fresh agent session via host skill catalog; invocation not verified"
+    },
+    {
+      "name": "security-review",
+      "scope": "project",
+      "source": "Foundation bundled assets/project-skills/security-review; pre-install content snapshot",
+      "sourceRevision": "sha256:fd361917704ead6725794dea94fc08def2916ca5c8a561a9517192f7a4821d8a (pre-install package inventory)",
+      "sourceFileCount": 2,
+      "sourceInventorySha256": "fd361917704ead6725794dea94fc08def2916ca5c8a561a9517192f7a4821d8a",
+      "path": ".agents/skills/security-review",
+      "invocationPolicy": "On application-code, dependency, security-configuration, executable-configuration, or CI changes",
+      "installed": true,
+      "installedFileCount": 2,
+      "installedInventorySha256": "3c99126b12da9ece1d8f8334c7968d010290110349e46ba5f941c1a3fad27c05",
+      "missingFiles": [],
+      "changedFiles": [
+        "references/review-contract.md"
+      ],
+      "addedFiles": [],
+      "approvedChanges": [
+        {
+          "path": "references/review-contract.md",
+          "reason": "Map source guidance to this project’s documented proposed OCR boundaries, testing and current absence of implementation."
+        }
+      ],
+      "inventoryVerified": true,
+      "discoverable": "verified in fresh agent session via host skill catalog; invocation not verified"
+    },
+    {
+      "name": "graphify",
+      "scope": "project",
+      "source": "Foundation bundled assets/project-skills/graphify; pre-install content snapshot",
+      "sourceRevision": "sha256:aab00021382bf9fa662577f3db7605d38269edc8aa9f690d80a47176cd34ccd7 (pre-install package inventory)",
+      "sourceFileCount": 12,
+      "sourceInventorySha256": "aab00021382bf9fa662577f3db7605d38269edc8aa9f690d80a47176cd34ccd7",
+      "path": ".agents/skills/graphify",
+      "invocationPolicy": "Use for codebase/content discovery when relevant; CLI availability is separate",
+      "installed": true,
+      "installedFileCount": 12,
+      "installedInventorySha256": "aab00021382bf9fa662577f3db7605d38269edc8aa9f690d80a47176cd34ccd7",
+      "missingFiles": [],
+      "changedFiles": [],
+      "addedFiles": [],
+      "approvedChanges": [],
+      "inventoryVerified": true,
+      "discoverable": "verified in fresh agent session via host skill catalog; invocation not verified"
+    },
+    {
+      "name": "hook-management",
+      "scope": "project",
+      "source": "Foundation bundled assets/project-skills/hook-management; pre-install content snapshot",
+      "sourceRevision": "sha256:01e66efa463c5fff70ccf3b1eee3cfc741b693de6de574d9c2dc2f91a18fd10b (pre-install package inventory)",
+      "sourceFileCount": 2,
+      "sourceInventorySha256": "01e66efa463c5fff70ccf3b1eee3cfc741b693de6de574d9c2dc2f91a18fd10b",
+      "path": ".agents/skills/hook-management",
+      "invocationPolicy": "Only when the user requests hook inspection, configuration, migration, or removal",
+      "installed": true,
+      "installedFileCount": 2,
+      "installedInventorySha256": "01e66efa463c5fff70ccf3b1eee3cfc741b693de6de574d9c2dc2f91a18fd10b",
+      "missingFiles": [],
+      "changedFiles": [],
+      "addedFiles": [],
+      "approvedChanges": [],
+      "inventoryVerified": true,
+      "discoverable": "verified in fresh agent session via host skill catalog; invocation not verified"
+    },
+    {
+      "name": "impeccable",
+      "scope": "project",
+      "source": "Foundation bundled assets/project-skills/impeccable; pre-install content snapshot",
+      "sourceRevision": "sha256:dc55eb3bcfc827aaa51f06bdda6bd88e21f6a75eaee261039095e98057c39cd0 (pre-install package inventory)",
+      "sourceFileCount": 64,
+      "sourceInventorySha256": "dc55eb3bcfc827aaa51f06bdda6bd88e21f6a75eaee261039095e98057c39cd0",
+      "path": ".agents/skills/impeccable",
+      "invocationPolicy": "For UI design work; separate engine not installed by setup; hook changes route through hook-management",
+      "installed": true,
+      "installedFileCount": 64,
+      "installedInventorySha256": "dc55eb3bcfc827aaa51f06bdda6bd88e21f6a75eaee261039095e98057c39cd0",
+      "missingFiles": [],
+      "changedFiles": [],
+      "addedFiles": [],
+      "approvedChanges": [],
+      "inventoryVerified": true,
+      "discoverable": "verified in fresh agent session via host skill catalog; invocation not verified"
+    }
+  ],
+  "skillChecklist": "docs/agents/skills-checklist.md"
+}
