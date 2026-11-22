@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { jobWireSchema, mapJob, mapPage, pageDetailWireSchema } from "@/features/ocr/api/schema";
+import {
+	capabilitiesWireSchema,
+	jobWireSchema,
+	mapCapabilities,
+	mapJob,
+	mapPage,
+	pageDetailWireSchema,
+} from "@/features/ocr/api/schema";
 
 const baseJob = {
 	id: "00000000-0000-4000-8000-000000000001",
@@ -18,6 +25,32 @@ const baseJob = {
 };
 
 describe("OCR API wire schemas", () => {
+	it("maps backend capabilities to frontend field names", () => {
+		const mapped = mapCapabilities(
+			capabilitiesWireSchema.parse({
+				supported_media_types: ["application/pdf"],
+				max_upload_bytes: 5_000_000,
+				max_pages: 20,
+				pdf_dpi: 150,
+				max_page_pixels: 20_000_000,
+				max_total_pixels: 80_000_000,
+				max_pending_jobs: 2,
+				max_retained_jobs: 5,
+				worker_count: 1,
+				job_ttl_seconds: 3600,
+				model_id: "fixture-ocr",
+				model_revision: "fixture",
+			}),
+		);
+
+		expect(mapped).toEqual({
+			supportedMediaTypes: ["application/pdf"],
+			maxUploadBytes: 5_000_000,
+			maxPages: 20,
+		});
+		expect(mapped).not.toHaveProperty("max_upload_bytes");
+	});
+
 	it("maps backend job field names to the frontend model", () => {
 		const job = mapJob(jobWireSchema.parse(baseJob));
 		expect(job.id).toBe(baseJob.id);

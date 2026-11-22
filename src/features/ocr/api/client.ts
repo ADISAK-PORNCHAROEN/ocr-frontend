@@ -3,6 +3,7 @@ import {
 	capabilitiesWireSchema,
 	type Job,
 	jobWireSchema,
+	mapCapabilities,
 	mapJob,
 	mapPage,
 	type PageDetail,
@@ -93,7 +94,7 @@ export async function createJob(file: File, signal?: AbortSignal): Promise<Job> 
 
 export async function getCapabilities(signal?: AbortSignal): Promise<Capabilities> {
 	return jsonRequest("/api/ocr/capabilities", { method: "GET", signal }, (body) =>
-		capabilitiesWireSchema.parse(body),
+		mapCapabilities(capabilitiesWireSchema.parse(body)),
 	);
 }
 

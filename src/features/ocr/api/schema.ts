@@ -41,7 +41,13 @@ export const capabilitiesWireSchema = z.object({
 	model_revision: z.string(),
 });
 
-export type Capabilities = z.infer<typeof capabilitiesWireSchema>;
+export type CapabilitiesWire = z.infer<typeof capabilitiesWireSchema>;
+
+export type Capabilities = {
+	supportedMediaTypes: string[];
+	maxUploadBytes: number;
+	maxPages: number;
+};
 
 const lineWireSchema = z.object({
 	text: z.string(),
@@ -129,6 +135,14 @@ export function mapJob(wire: JobWire): Job {
 		},
 		createdAt: wire.created_at,
 		expiresAt: wire.expires_at,
+	};
+}
+
+export function mapCapabilities(wire: CapabilitiesWire): Capabilities {
+	return {
+		supportedMediaTypes: wire.supported_media_types,
+		maxUploadBytes: wire.max_upload_bytes,
+		maxPages: wire.max_pages,
 	};
 }
 

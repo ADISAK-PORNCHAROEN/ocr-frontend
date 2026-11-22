@@ -48,15 +48,15 @@ export function UploadPanel({
 	function chooseFile(candidate: File | undefined) {
 		if (!candidate) return;
 		const mediaType = resolveMediaType(candidate);
-		if (!mediaType || (capabilities && !capabilities.supported_media_types.includes(mediaType))) {
+		if (!mediaType || (capabilities && !capabilities.supportedMediaTypes.includes(mediaType))) {
 			setFile(null);
 			setValidationError("รองรับเฉพาะไฟล์ JPG, PNG หรือ PDF เท่านั้น");
 			return;
 		}
-		if (capabilities && candidate.size > capabilities.max_upload_bytes) {
+		if (capabilities && candidate.size > capabilities.maxUploadBytes) {
 			setFile(null);
 			setValidationError(
-				`ไฟล์มีขนาด ${formatBytes(candidate.size)} เกินขีดจำกัด ${formatBytes(capabilities.max_upload_bytes)}`,
+				`ไฟล์มีขนาด ${formatBytes(candidate.size)} เกินขีดจำกัด ${formatBytes(capabilities.maxUploadBytes)}`,
 			);
 			return;
 		}
@@ -167,8 +167,8 @@ export function UploadPanel({
 
 				{capabilities ? (
 					<p className="limit-note">
-						ไม่เกิน {formatBytes(capabilities.max_upload_bytes)} · สูงสุด{" "}
-						{capabilities.max_pages.toLocaleString("th-TH")} หน้า
+						ไม่เกิน {formatBytes(capabilities.maxUploadBytes)} · สูงสุด{" "}
+						{capabilities.maxPages.toLocaleString("th-TH")} หน้า
 					</p>
 				) : capabilitiesError ? (
 					<p className="limit-note">ยังอ่านขีดจำกัดจาก backend ไม่ได้ ระบบจะตรวจไฟล์อีกครั้งเมื่อส่ง</p>
