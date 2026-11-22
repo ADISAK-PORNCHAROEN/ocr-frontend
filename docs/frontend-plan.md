@@ -1,6 +1,6 @@
 # แผน frontend: OCR Playground
 
-สถานะ: implementation สำหรับ Issues #4–#9 อยู่ใน branch `develop` และผ่าน acceptance checks การเชื่อมต่อ backend จริงผ่าน Next.js BFF ผ่าน local browser flow แล้ว โดยยังไม่ merge PR
+สถานะ: implementation สำหรับ Issues #4–#9 ผ่าน acceptance checks และ merge เข้า `main` ผ่าน PR #10 แล้ว การเชื่อมต่อ backend จริงผ่าน Next.js BFF ผ่าน local browser flow; Issue #3 ยังเป็น specification หลัก
 
 ## เป้าหมายและขอบเขต
 
