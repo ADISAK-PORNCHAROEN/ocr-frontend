@@ -1,23 +1,196 @@
-# Architecture
+# Frontend architecture
 
-Status: proposed; no application source or executable entry points are present yet. The owner-approved product direction is in [PRODUCT.md](../PRODUCT.md), with details in the [frontend plan](frontend-plan.md). The backend contract is proposed and has not been implemented.
+Status: Issues #4–#9 are implemented and their acceptance checks passed on
+`develop`. The local fixture suite and browser run through the BFF to the real
+local backend covered upload, status, page images, OCR text, TXT and JSON
+exports, failure limits, expiry, and deletion. Issue #3 remains the product
+specification. The implementation PR is not merged.
 
-## Intended boundaries
+## Runtime boundaries
 
 ```mermaid
 flowchart LR
-    User[Browser: OCR workspace] -->|same-origin requests| BFF[Next.js route handlers]
-    BFF -->|OCR API| Backend[Separate OCR backend]
+  Browser[Paperflow workspace] -->|same-origin requests| BFF[Next.js Route Handlers]
+  BFF -->|OCR_BACKEND_URL| Backend[FastAPI OCR service]
+  Browser --> Drafts[In-memory page drafts]
+  Browser --> Files[TXT and JSON download]
+  Fixture[HTTP test fixture] --> BFF
 ```
 
-The browser owns in-memory user edits and renders the workspace. Server data and polling are intended for TanStack Query; the OCR session owns selected page and edits separately from original OCR data. Next.js route handlers form a thin BFF that forwards requests and responses, with connection-error handling, to the backend. The backend owns OCR processing, file validation and temporary data cleanup.
+The browser owns page selection, drafts, and file composition. TanStack Query
+owns backend job and page data. Next.js Route Handlers forward requests to the
+configured backend, allow only documented routes and methods, and check the
+configured origin before upload or delete. They do not run OCR or define file
+limits. A local HTTP fixture drives the same route handlers during browser
+tests. Fixture results prove the frontend flow; the separate local integration
+run verifies the current backend contract.
 
-The planned application uses Next.js App Router, React, TypeScript, Tailwind CSS, native fetch and boundary validation with Zod. Shared UI primitives are independent of OCR; OCR-specific UI composes them. These are decisions, not claims that dependencies or modules already exist.
+## Ownership and data shapes
 
-## Critical journey
+```text
+src/
+  app/                         # App Router pages and explicit BFF endpoints
+  components/ui/               # accessible, OCR-independent primitives
+  features/ocr/
+    api/                        # schemas, same-origin client and wire mapping
+    components/                 # upload, progress, review, editor and export
+    export/                     # TXT and JSON serialization
+    session/                    # memory-only reducer and selectors
+    queries.ts                  # query keys, polling and mutations
+    components/OcrWorkspace.tsx  # Paperflow composition and session operations
+  lib/                          # server-only environment parsing
+tests/
+  fixtures/                     # separate HTTP backend fixture
+  unit/                          # boundary and serialization behavior
+  e2e/                           # browser behavior through the BFF
+```
 
-Upload one supported file through the BFF, poll the job to a terminal state, select a page and edit a separate in-memory draft, fetch all successful pages for export, then request deletion on restart or end. Failed pages and successful blank pages are distinct. A missing job must not silently discard copyable in-memory edits.
+Server responses start as `unknown` and are parsed by Zod in the OCR API
+boundary. Components receive frontend domain values, not FastAPI field names;
+capabilities are narrowed to the upload UI's media types and limits at that
+boundary. The session reducer owns only the selected page, page drafts and edit
+revision. TanStack Query remains the sole owner of server snapshots.
 
-## Integration and unresolved contract
+```ts
+type PageDetail =
+  | { kind: "completed"; number: number; hasText: boolean; original: OriginalOcr }
+  | { kind: "failed"; number: number; error: PageError }
+  | { kind: "pending" | "processing"; number: number };
 
-The separate backend's `frontend-api.md` is a proposal, not an implemented contract. Confirm status/error schemas, limits and expiry, binary images and coordinates, multipart forwarding, cancellation and timeouts before claiming integration. No local native API schema or executable contract test currently exists. Avoid exposing backend wire representations across unrelated modules; validate at the external boundary.
+type OcrSession = {
+  jobId: string;
+  selectedPage: number;
+  drafts: Readonly<Record<number, string>>;
+  revision: number;
+  downloadedRevision: number;
+};
+
+type SessionAction =
+  | { type: "select-page"; pageNumber: number }
+  | { type: "edit-page"; pageNumber: number; text: string }
+  | { type: "restore-page"; pageNumber: number }
+  | { type: "export-downloaded"; revision: number };
+
+function sessionReducer(state: OcrSession, action: SessionAction): OcrSession;
+async function createJob(file: File, signal: AbortSignal): Promise<Job>;
+async function getJob(jobId: JobId, signal: AbortSignal): Promise<Job>;
+async function listPages(jobId: JobId, signal: AbortSignal): Promise<PageIndex>;
+async function getPage(jobId: JobId, pageNumber: number, signal: AbortSignal): Promise<PageDetail>;
+async function createExport(input: ExportSnapshot, format: ExportFormat): Promise<Blob>;
+```
+
+A draft exists when its page key exists, even when its value is `""`. Original
+OCR data is immutable. A captured export records its edit revision; later edits
+remain unsaved when that older revision is downloaded. A job-keyed React session
+and query key keep delayed data from another job out of the current view.
+
+## Backend contract mapping
+
+The frontend adapter validates the backend's current
+[job schemas](https://github.com/ADISAK-PORNCHAROEN/ocr-backend/blob/develop/app/api/schemas/jobs.py)
+and follows its
+[job routes](https://github.com/ADISAK-PORNCHAROEN/ocr-backend/blob/develop/app/api/controllers/jobs.py).
+The contract is also recorded in the backend's `docs/frontend-api.md` and was
+verified in a local browser integration run.
+
+| Frontend route | Backend route | Purpose |
+| --- | --- | --- |
+| `/api/ocr/capabilities` | `GET /api/v1/ocr/capabilities` | Current media types and limits |
+| `/api/ocr/jobs` | `POST /api/v1/ocr/jobs` | Multipart field `file` |
+| `/api/ocr/jobs/{id}` | `GET`, `DELETE /api/v1/ocr/jobs/{id}` | Job status and cleanup |
+| `/api/ocr/jobs/{id}/pages` | `GET /api/v1/ocr/jobs/{id}/pages` | Page records, mapped to an index |
+| `/api/ocr/jobs/{id}/pages/{number}` | Matching backend page route | Full OCR detail |
+| `/api/ocr/jobs/{id}/pages/{number}/image` | Matching backend image route | PNG bytes |
+
+The backend returns `id`, `filename`, `media_type`, snake_case progress, and
+ISO timestamps for a job. Page records use `page_number`, `has_text`,
+`original_text`, `image_size`, and `image_url`. OCR boxes use `{x1, y1, x2,
+y2}`. Errors include `code`, `message`, and `retryable`. The adapter validates
+these shapes, maps them once, and constructs image paths from the validated job
+and page IDs. It never fetches the backend-provided `image_url` as an arbitrary
+target.
+
+The page-list route currently returns full page records. The frontend maps that
+response to page statuses. Export still requests each successful page detail,
+including pages the user has not opened, before it creates a file.
+
+## Request and session flow
+
+1. The upload form accepts one JPG, PNG, or PDF. Capabilities supplies numeric
+   limits when the backend responds; the UI invents none. Backend validation is
+   authoritative. Upload mutation retries are disabled. An uncertain outcome
+   requires an explicit user action.
+2. After a valid job response, a keyed session starts. The job query polls every
+   1.5 seconds while status is `queued` or `processing`, then stops. Query keys
+   include the job ID.
+3. Terminal jobs expose page navigation. A completed blank page stays editable.
+   A failed page displays its error and has no OCR editor.
+4. Export captures a draft snapshot and fetches all completed page details. A
+   failed read or incomplete page set produces no file. Partial results require
+   confirmation. TXT names every page. JSON separates edits from original OCR
+   text and metadata.
+5. Restart and finish warn before discarding unsaved edits, then request DELETE.
+   A failed delete offers retry or continue. A missing or expired job keeps the
+   in-memory drafts available for copying and prevents complete export. If a
+   page-list refetch returns 404, a recovery view exposes every edited page from
+   session state and allows copying them together.
+6. Refresh and tab close never persist drafts. `beforeunload` warns when the
+   current revision differs from the last downloaded revision. It does not try
+   to delete a backend job.
+
+## Architecture decision
+
+Two candidates were scored from one to five against the same criteria.
+
+| Criterion | Candidate A | Candidate B | Reason |
+| --- | ---: | ---: | --- |
+| Domain invariants | 5 | 5 | Both separate OCR results from memory-only edits and preserve blank-page edits. |
+| Stale-request safety | 5 | 4 | A keys the component and queries by job ID and cancels work on unmount. B adds a second generation value beside the job-keyed queries. |
+| Ownership boundaries | 5 | 4 | A keeps session state local to one job. B centralizes several domain operations in one controller. |
+| Acceptance coverage | 4 | 5 | B spells out uncertainty and decision states more fully. |
+| Interface depth | 5 | 4 | A exposes fewer coordination states to UI components. |
+| **Total** | **24** | **22** | |
+
+Candidate A uses a keyed session component, reducer, and job-scoped queries.
+Candidate B uses one workspace controller with a richer view-state union and
+generation tokens. Candidate A is the base because the job ID already scopes
+queries and the keyed component; a second generation counter would repeat that
+identity. The selected shape keeps component operations tied to one job
+lifetime.
+
+The implementation uses Candidate A's job-keyed session and adopts Candidate
+B's typed workspace decisions with one session operation controller for export
+and cleanup. Confirmation, fetch completeness, and delete recovery stay out of
+presentation components. The implementation adds no second server cache,
+actor, or generic operation framework. The cross-judge step was skipped because
+every available model belonged to the GPT family, so no independent model
+family could review the candidates.
+
+## Execution and verification checkpoints
+
+Issues remain the acceptance checklist. This sequence records implementation
+order without restating their criteria.
+
+- [x] Scaffold the app and native checks before feature work.
+- [x] Implement the BFF, validated API adapter, and HTTP fixture for #4.
+- [x] Implement upload and terminal polling for #4 and #5.
+- [x] Implement page review and memory-only editing for #6.
+- [x] Implement complete TXT and JSON export for #7.
+- [x] Implement confirmation, DELETE recovery, and expiry behavior for #8.
+- [x] Verify the current real backend against #9 and record the limits.
+- [x] Run unit, browser, lint, type, production-build, and dependency checks.
+- [ ] Open a PR from `develop` and leave it unmerged until the owner asks.
+
+**Throughput checkpoint.** Blocking first steps are the issue audit, backend
+schema inspection, branch check, and test-harness setup. The implementation is
+one code-coupled workstream, so one owner will serialize changes to the shared
+workspace and commit after each issue-sized verification. The backend is a
+separate, changing repository and remains read-only here. At each phase, record
+the command, observable result, and commit before starting the next issue.
+
+Vitest covers boundary parsing and serialization. Playwright exercises the
+browser through Next.js and a separate local HTTP fixture. The synthetic
+backend run verified the current OCR contract, PDF page data and coordinates,
+file limits, expiry, and temporary-file cleanup. It does not measure OCR
+accuracy on real documents or verify production deployment settings. See
+[`docs/TESTING.md`](TESTING.md) for commands and results.

@@ -1,6 +1,6 @@
 # OCR Playground Agent Guide
 
-OCR Playground is a planned local-first web interface for OCR jobs. The frontend and its backend contract are not implemented yet.
+OCR Playground is a local-first web interface for OCR jobs. The upload, progress, page review, editing, export, lifecycle and BFF flows are implemented on `develop`. The browser suite and a local integration through the companion backend have been run. Keep this a local-first demo unless the security model is revised.
 
 ## Working agreements
 
@@ -11,7 +11,7 @@ OCR Playground is a planned local-first web interface for OCR jobs. The frontend
 ## Find the source
 
 - For relevant codebase or content discovery, use `.agents/skills/graphify/SKILL.md` when its CLI is available. Check graph freshness and confirm findings against source; if unavailable, report the gap and use targeted search.
-- The accepted plan and draft spec are in `docs/frontend-plan.md` and `docs/spec.md`; the backend contract remains proposed and belongs to the separate backend project.
+- The accepted behavior is in `docs/frontend-plan.md` and `docs/spec.md`; the backend contract is owned by `ADISAK-PORNCHAROEN/ocr-backend` and documented in its `docs/frontend-api.md`.
 
 ## Read by task
 
@@ -27,3 +27,13 @@ OCR Playground is a planned local-first web interface for OCR jobs. The frontend
 ## Completion
 
 Run checks appropriate to the change and report actual results, remaining gaps and any unverified behavior. Follow the project testing and security review routes for application changes. Preserve unrelated changes.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+## This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

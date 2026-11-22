@@ -1,25 +1,25 @@
 # แผน frontend: OCR Playground
 
-สถานะ: ผู้ใช้ยืนยันทิศทาง frontend แล้ว สัญญา API และขีดจำกัดของ backend ยังไม่ยืนยัน
+สถานะ: implementation สำหรับ Issues #4–#9 อยู่ใน branch `develop` และผ่าน acceptance checks การเชื่อมต่อ backend จริงผ่าน Next.js BFF ผ่าน local browser flow แล้ว โดยยังไม่ merge PR
 
 ## เป้าหมายและขอบเขต
 
-สร้างเว็บ portfolio สำหรับทดลอง OCR บนเครื่อง รับ JPG, PNG หรือ PDF ครั้งละหนึ่งไฟล์ รองรับมือถือและเดสก์ท็อป ใช้ภาษาไทยก่อน หน้าหลักมีคำอธิบายสั้น ๆ และจุดอัปโหลดทันที การออกแบบ UX/UI โดยละเอียดจะใช้ impeccable ในขั้นถัดไป
+สร้างเว็บ portfolio สำหรับทดลอง OCR บนเครื่อง รับ JPG, PNG หรือ PDF ครั้งละหนึ่งไฟล์ รองรับมือถือและเดสก์ท็อป ใช้ภาษาไทยก่อน หน้าหลักมีคำอธิบายสั้น ๆ และจุดอัปโหลดทันที ใช้แนวทาง Paperflow (C) ซึ่งบันทึกไว้ใน `DESIGN.md` และ `docs/design/concept-c.html`
 
-## เทคโนโลยีที่เสนอ
+## เทคโนโลยีที่ใช้
 
 - Next.js App Router, React และ TypeScript
 - Tailwind CSS และ component ของโปรเจกต์ใน `components/ui` โดยยังไม่ใช้ shadcn/ui
 - TanStack Query สำหรับข้อมูลจาก backend และ polling
-- React Context และ reducer สำหรับ session และข้อความที่ผู้ใช้แก้ในหน่วยความจำ
+- React reducer ใน job session สำหรับหน้าปัจจุบันและข้อความที่ผู้ใช้แก้ในหน่วยความจำ
 - Native fetch; Zod สำหรับตรวจข้อมูลที่ขอบเขต API
 - Vitest และ React Testing Library สำหรับ unit/component tests; Playwright สำหรับ flow หลัก
 
 ## ขอบเขตระบบ
 
-Browser เรียก Next.js Route Handlers ซึ่งส่งต่อไป OCR backend ผ่าน BFF แบบบาง โดยรักษา request และ response contract ของ backend เป็นหลัก และจัดการข้อผิดพลาดจากการเชื่อมต่อ ไม่ทำ business logic OCR ซ้ำ ต้องทดสอบ multipart upload, ภาพ binary, ขนาดไฟล์, timeout และการยกเลิก request กับระบบจริง
+Browser เรียก Next.js Route Handlers ซึ่งส่งต่อไป OCR backend ผ่าน BFF แบบบาง โดยรักษา request และ response contract ของ backend เป็นหลัก และจัดการข้อผิดพลาดจากการเชื่อมต่อ ไม่ทำ business logic OCR ซ้ำ Local browser integration ทดสอบ multipart upload และภาพ binary กับ backend จริง ส่วน timeout และการยกเลิก request ทดสอบกับ HTTP fixture ดูผลและขอบเขตที่ยังไม่ได้วัดใน [`TESTING.md`](TESTING.md)
 
-โครงสร้างเบื้องต้น:
+โครงสร้างปัจจุบัน:
 
 ```text
 src/
@@ -27,15 +27,14 @@ src/
   components/ui/       # UI พื้นฐานที่ไม่ขึ้นกับ OCR
   features/ocr/
     api/               # ติดต่อ BFF, ตรวจและแปลง response
-    components/        # upload, progress, viewer, editor, page selector
+    components/        # upload, progress, review, editor and page selector
     session/           # session และข้อความที่แก้ไข
     export/            # สร้าง TXT และ JSON
-    types.ts
-    OcrWorkspace.tsx
-  lib/                 # สิ่งที่ใช้ข้าม feature จริง
+    queries.ts         # query keys, polling and mutations
+  lib/server/          # อ่านค่า BFF environment
 ```
 
-UI primitives เช่น button, input, select, textarea, dialog และ progress สร้างเมื่อจำเป็น พร้อมรองรับ keyboard, focus และ accessibility โดย feature components เป็นผู้ประกอบ UI และพฤติกรรม OCR
+Reusable UI primitives ปัจจุบันมี button, card, progress และ textarea ส่วน upload ใช้ native file input โดย feature components เป็นผู้ประกอบ UI และพฤติกรรม OCR
 
 ## ข้อมูลและ workflow
 
@@ -51,21 +50,21 @@ UI primitives เช่น button, input, select, textarea, dialog และ pro
 
 หาก upload ขาดการเชื่อมต่อก่อนรับ job ID ให้ผู้ใช้เลือกส่งใหม่เอง เพราะ backend อาจรับงานไปแล้ว อาศัย backend ลบงานที่หมดอายุเป็นกลไกสำรอง ป้องกันผล async ของงานเก่ามาแก้ session ของงานใหม่
 
-## จุดที่ต้องยืนยันกับ backend
+## ผลตรวจจาก backend
 
-- API ยังเป็นข้อเสนอ: ตรวจ endpoint, status, error และ schema จาก implementation จริง
-- กำหนดขนาดไฟล์ จำนวนหน้าสูงสุด อายุข้อมูล และแหล่งค่าเหล่านี้ก่อนแสดงข้อจำกัดจริง
-- ยืนยันรูปแบบ OCR, confidence, พิกัด และความตรงกับภาพแต่ละหน้า
-- ทดสอบการลบเมื่อหมดอายุและกรณีปิดแท็บหรือ upload ขาดการเชื่อมต่อ
-- ตรวจการส่งต่อไฟล์และภาพผ่าน Next.js พร้อมขีดจำกัดและ timeout ของสภาพแวดล้อมที่ใช้จริง
+- Endpoint, status, error และ schema ตรงกับ [สัญญา API ของ backend](https://github.com/ADISAK-PORNCHAROEN/ocr-backend/blob/develop/docs/frontend-api.md) ใน local browser run; capabilities endpoint ส่งค่า limit ที่หน้าอัปโหลดใช้
+- Local backend รายงานขนาดไฟล์สูงสุด 20 MiB และสูงสุด 20 หน้า การส่งไฟล์เกินขนาด, PDF ที่ถอดรหัสไม่ได้, PDF ที่เข้ารหัส และจำนวนหน้าเกินถูกปฏิเสธตาม contract
+- ทดสอบ PDF สองหน้ากับภาพ PNG ผ่าน Next.js BFF แล้ว ได้ OCR text, ภาพหน้า, TXT, JSON และพิกัดบรรทัด จากนั้น DELETE สำเร็จ
+- Backend TTL เป็นทางสำรองเมื่อปิดแท็บหรือ DELETE ล้มเหลว ทดสอบหมดอายุด้วย TTL 60 วินาทีแล้วได้ `404` และไม่มีไฟล์ใน isolated storage
+- accuracy กับชุดเอกสารจริงและค่าตั้งของ production ยังไม่ได้วัด การตรวจนี้ยืนยัน local contract เท่านั้น
 
-## ลำดับงานที่เสนอ
+## สถานะงาน
 
-1. ทบทวนแผนและยืนยันข้อตกลงที่เหลือกับผู้ใช้และ backend
-2. ใช้ impeccable เก็บ product context และออกแบบ UX/UI ทั้ง desktop และมือถือ
-3. Setup Next.js และเครื่องมือพัฒนา สร้าง UI primitives ที่จำเป็น
-4. พัฒนา workflow ด้วย mock API ครอบคลุม loading, empty, partial failure และ expiry
-5. เชื่อม BFF กับ backend จริงและตรวจ contract
-6. ทดสอบ upload, polling, edit, restore, export, delete และกรณีผิดพลาดแบบ end-to-end
+1. Issue #3 เป็นข้อกำหนดผลิตภัณฑ์หลักและไม่สร้าง spec ซ้ำ
+2. บันทึกแนวทาง Paperflow (C) สำหรับ desktop และ mobile แล้ว
+3. Setup Next.js และ UI primitives ที่ใช้จริงแล้ว
+4. ทำ workflow ผ่าน fixture ครอบคลุม loading, empty, partial failure และ expiry แล้ว
+5. เชื่อม BFF กับ backend จริงและตรวจ contract แล้ว
+6. ทดสอบ upload, polling, edit, restore, export, delete และ failure cases แล้ว ดูผลตรวจใน [`TESTING.md`](TESTING.md)
 
 เอกสารอ้างอิง: `frontend-api.md`, `frontend-guide.md` และ `project-scope.md` ใน repository ของ backend

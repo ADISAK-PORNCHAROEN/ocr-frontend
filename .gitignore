@@ -1,3 +1,14 @@
 /graphify-out/
 /.env.local
 !/.env.example
+/node_modules/
+/.next/
+/.next-e2e/
+/.next-live/
+/next-env.d.ts
+/docs/design/implemented-desktop-full.png
+/out/
+/coverage/
+/playwright-report/
+/test-results/
+*.tsbuildinfo
