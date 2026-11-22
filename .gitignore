@@ -6,6 +6,7 @@
 /.next-e2e/
 /.next-live/
 /next-env.d.ts
+/docs/design/implemented-desktop-full.png
 /out/
 /coverage/
 /playwright-report/
