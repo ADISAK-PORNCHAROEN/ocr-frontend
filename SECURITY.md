@@ -12,4 +12,4 @@ Not established by the project owner.
 
 ## Security model
 
-See [the proposed security model](docs/SECURITY-MODEL.md). There is no implemented application or verified security behavior yet.
+See the [local security model and verification](docs/SECURITY-MODEL.md). OCR Playground has no user authentication and is not approved for public deployment.

@@ -1,8 +1,10 @@
 # Frontend architecture
 
-Status: implementation design for Issues #4–#9. Issue #3 remains the product
-specification. The backend source now has the proposed routes, but the source is
-uncommitted and its runtime has not been verified.
+Status: Issues #4–#9 are implemented and their acceptance checks passed on
+`develop`. The local fixture suite and browser run through the BFF to the real
+local backend covered upload, status, page images, OCR text, TXT and JSON
+exports, failure limits, expiry, and deletion. Issue #3 remains the product
+specification. The implementation PR is not merged.
 
 ## Runtime boundaries
 
@@ -17,9 +19,11 @@ flowchart LR
 
 The browser owns page selection, drafts, and file composition. TanStack Query
 owns backend job and page data. Next.js Route Handlers forward requests to the
-configured backend. They do not run OCR or define file limits. A local HTTP
-fixture drives the same route handlers during browser tests. Fixture results
-prove the frontend flow, not the backend implementation.
+configured backend, allow only documented routes and methods, and check the
+configured origin before upload or delete. They do not run OCR or define file
+limits. A local HTTP fixture drives the same route handlers during browser
+tests. Fixture results prove the frontend flow; the separate local integration
+run verifies the current backend contract.
 
 ## Ownership and data shapes
 
@@ -33,7 +37,7 @@ src/
     export/                     # TXT and JSON serialization
     session/                    # memory-only reducer and selectors
     queries.ts                  # query keys, polling and mutations
-    workspace.tsx               # Paperflow composition and session operations
+    components/OcrWorkspace.tsx  # Paperflow composition and session operations
   lib/                          # server-only environment parsing
 tests/
   fixtures/                     # separate HTTP backend fixture
@@ -81,11 +85,12 @@ and query key keep delayed data from another job out of the current view.
 
 ## Backend contract mapping
 
-The older API document is a proposal and differs from the current backend
-source. The frontend adapter follows the companion backend's
-[job schemas](../../ocr-backend/app/api/schemas/jobs.py) and
-[job routes](../../ocr-backend/app/api/controllers/jobs.py) until a committed,
-runnable backend contract replaces them.
+The frontend adapter validates the backend's current
+[job schemas](https://github.com/ADISAK-PORNCHAROEN/ocr-backend/blob/develop/app/api/schemas/jobs.py)
+and follows its
+[job routes](https://github.com/ADISAK-PORNCHAROEN/ocr-backend/blob/develop/app/api/controllers/jobs.py).
+The contract is also recorded in the backend's `docs/frontend-api.md` and was
+verified in a local browser integration run.
 
 | Frontend route | Backend route | Purpose |
 | --- | --- | --- |
@@ -150,12 +155,13 @@ queries and the keyed component; a second generation counter would repeat that
 identity. The selected shape keeps component operations tied to one job
 lifetime.
 
-The implementation will graft Candidate B's typed workspace decisions and one
-session operation controller for export and cleanup. That keeps confirmation,
-fetch completeness, and delete recovery out of presentation components. It will
-not add a second server cache, actor, or generic operation framework. The
-cross-judge step was skipped because every available model belongs to the GPT
-family, so no independent model family could review the candidates.
+The implementation uses Candidate A's job-keyed session and adopts Candidate
+B's typed workspace decisions with one session operation controller for export
+and cleanup. Confirmation, fetch completeness, and delete recovery stay out of
+presentation components. The implementation adds no second server cache,
+actor, or generic operation framework. The cross-judge step was skipped because
+every available model belonged to the GPT family, so no independent model
+family could review the candidates.
 
 ## Execution and verification checkpoints
 
@@ -164,12 +170,12 @@ order without restating their criteria.
 
 - [x] Scaffold the app and native checks before feature work.
 - [x] Implement the BFF, validated API adapter, and HTTP fixture for #4.
-- [ ] Implement upload and terminal polling for #4 and #5.
-- [ ] Implement page review and memory-only editing for #6.
-- [ ] Implement complete TXT and JSON export for #7.
-- [ ] Implement confirmation, DELETE recovery, and expiry behavior for #8.
-- [ ] Verify the current real backend against #9 or keep #9 open with evidence.
-- [ ] Run the full unit, browser, lint, type, and production-build checks.
+- [x] Implement upload and terminal polling for #4 and #5.
+- [x] Implement page review and memory-only editing for #6.
+- [x] Implement complete TXT and JSON export for #7.
+- [x] Implement confirmation, DELETE recovery, and expiry behavior for #8.
+- [x] Verify the current real backend against #9 and record the limits.
+- [x] Run unit, browser, lint, type, production-build, and dependency checks.
 - [ ] Open a PR from `develop` and leave it unmerged until the owner asks.
 
 **Throughput checkpoint.** Blocking first steps are the issue audit, backend
@@ -179,7 +185,9 @@ workspace and commit after each issue-sized verification. The backend is a
 separate, changing repository and remains read-only here. At each phase, record
 the command, observable result, and commit before starting the next issue.
 
-Vitest will cover boundary parsing and serialization. Playwright will exercise
-the browser through Next.js and a separate local HTTP fixture. This does not
-prove real OCR, PDF coordinates, retention, expiry, or backend cleanup. Those
-checks require the current backend source to run in isolated storage.
+Vitest covers boundary parsing and serialization. Playwright exercises the
+browser through Next.js and a separate local HTTP fixture. The synthetic
+backend run verified the current OCR contract, PDF page data and coordinates,
+file limits, expiry, and temporary-file cleanup. It does not measure OCR
+accuracy on real documents or verify production deployment settings. See
+[`docs/TESTING.md`](TESTING.md) for commands and results.

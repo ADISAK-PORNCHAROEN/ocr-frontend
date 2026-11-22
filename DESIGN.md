@@ -2,13 +2,13 @@
 
 ## Overview
 
-**Selected direction: Paperflow (concept C)**, chosen by the owner on 2026-11-22. It balances a clear OCR workspace with a distinctive but quiet portfolio presentation. The [standalone concept](docs/design/concept-c.html) and its [desktop](docs/design/concept-c-desktop.png) and [mobile](docs/design/concept-c-mobile.png) captures are the visual reference; they are illustrative, not a functioning OCR application. No production UI exists yet.
+**Selected direction: Paperflow (concept C)**, chosen by the owner on 2026-11-22. It balances a clear OCR workspace with a distinctive but quiet portfolio presentation. The [standalone concept](docs/design/concept-c.html) and its [desktop](docs/design/concept-c-desktop.png) and [mobile](docs/design/concept-c-mobile.png) captures are the visual reference; the Next.js application now implements that direction in the separate frontend project.
 
 The first screen starts the upload immediately. A three-step indicator makes upload, processing and review legible; the review workspace keeps the page image and editable OCR text together and shows page outcomes without relying on color alone.
 
 ## Colors
 
-The chosen concept's starting tokens are below. Validate contrast and state usage in the implemented UI before finalizing them.
+The implemented CSS uses these tokens for its page, surfaces, text, actions and status states. The UI uses colors with text labels so status does not rely on color alone.
 
 | Role | Value |
 | --- | --- |
@@ -23,15 +23,15 @@ The chosen concept's starting tokens are below. Validate contrast and state usag
 
 ## Typography
 
-Use a readable Thai/English sans-serif throughout. The mockup uses `Leelawadee UI`, `Tahoma`, `Noto Sans Thai`, `Segoe UI`, then sans-serif; production font availability and licensing remain to be decided. The reference uses a 15px body with 1.55 line height and a 29–39px main heading. Test Thai wrapping and real OCR content rather than treating the sample receipt as a type specimen.
+Use a readable Thai/English sans-serif throughout. The application uses the system stack `Leelawadee UI`, `Tahoma`, `Noto Sans Thai`, `Segoe UI`, then sans-serif without bundling font assets. The reference uses a 15px body with 1.55 line height and a 29–39px main heading. Browser tests cover Thai copy and OCR content.
 
 ## Layout
 
-At desktop widths, use a centered shell up to 1440px with 40px side padding in the reference. The upload introduction and drop zone sit side by side; the completed workspace puts the document image and editable text in equal columns. Page thumbnails appear above the workspace, with selected, blank and failed states labeled.
+At desktop widths, use a centered shell up to 1440px with 40px side padding in the reference. The upload introduction and drop zone sit side by side; the completed workspace puts the document image and editable text in equal columns. Page thumbnails appear above the workspace, with selected, blank and failed states labeled. The implemented workspace was inspected at 1440×1100 and 390×844 with a synthetic two-page OCR job. See the [desktop](docs/design/implemented-desktop.png) and [mobile](docs/design/implemented-mobile.png) captures.
 
 ### Mobile and accessibility
 
-At 780px and below, stack upload content and the image/text panels; allow the page strip to scroll horizontally. At 520px and below, the reference uses 14px side padding. Captures at 1440px and 500px illustrate the direction; validate narrower viewports, text zoom, touch targets, focus, contrast and reduced motion during implementation. Use accessible labels, keyboard-operable controls and non-color status text.
+At 780px and below, stack upload content and the image/text panels; allow the page strip to scroll horizontally. At 520px and below, use 14px side padding. Browser checks exercise mobile layout and keyboard navigation. Controls have accessible labels, visible keyboard focus and status text that remains readable without color.
 
 ## Elevation, shapes and components
 
@@ -39,6 +39,15 @@ White surfaces, soft lavender grounds and light borders establish hierarchy; res
 
 ## States and acceptance
 
-Design and implement upload, queued, processing, completed, partial failure, failed, successful blank page, expiry and recovery. A failed page must never appear as a successful blank page. Preserve in-memory edits across page changes; require confirmation before restore or discarding undownloaded edits; retain the ability to copy edits after expiry. See [product requirements](PRODUCT.md) and [frontend plan](docs/frontend-plan.md) for full behavior.
+The application implements upload, queued, processing, completed, partial failure, failed, successful blank page, expiry and recovery. A failed page is distinct from a successful blank page. In-memory edits persist across page changes; restore and discard require confirmation; edits can be copied after expiry. See [product requirements](PRODUCT.md) and [frontend plan](docs/frontend-plan.md) for full behavior.
 
-The mockup combines different workflow states in one page to show the design. In the actual app, show the correct state at the correct time. File limits, retention and backend responses are not confirmed by the mockup. Verify desktop and mobile against real implementation and accessible interaction states before treating this as production-ready.
+The mockup combines different workflow states in one page to show the design. The application shows the state returned by the backend. File limits, retention and response shapes are defined by the implemented backend contract in [ocr-backend](https://github.com/ADISAK-PORNCHAROEN/ocr-backend/blob/develop/docs/frontend-api.md). A local CPU OCR flow has been exercised through the BFF. Accuracy on a real-document corpus and performance benchmarks have not been measured.
+
+## Implemented captures
+
+These local captures show a synthetic two-page PDF after OCR. The desktop view
+uses a 1440px viewport and the mobile view uses a 390px viewport.
+
+![Desktop capture of a completed two-page OCR job](docs/design/implemented-desktop.png)
+
+![Implemented OCR workspace at mobile width](docs/design/implemented-mobile.png)

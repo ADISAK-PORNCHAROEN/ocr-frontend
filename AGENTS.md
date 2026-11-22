@@ -1,6 +1,6 @@
 # OCR Playground Agent Guide
 
-OCR Playground is a local-first web interface for OCR jobs. The Next.js shell and verification harness are scaffolded; the OCR workflow and BFF are still being implemented. The companion backend source is changing and its runtime contract is not yet verified.
+OCR Playground is a local-first web interface for OCR jobs. The upload, progress, page review, editing, export, lifecycle and BFF flows are implemented on `develop`. The browser suite and a local integration through the companion backend have been run. Keep this a local-first demo unless the security model is revised.
 
 ## Working agreements
 
@@ -11,7 +11,7 @@ OCR Playground is a local-first web interface for OCR jobs. The Next.js shell an
 ## Find the source
 
 - For relevant codebase or content discovery, use `.agents/skills/graphify/SKILL.md` when its CLI is available. Check graph freshness and confirm findings against source; if unavailable, report the gap and use targeted search.
-- The accepted plan and draft spec are in `docs/frontend-plan.md` and `docs/spec.md`; the backend contract remains proposed and belongs to the separate backend project.
+- The accepted behavior is in `docs/frontend-plan.md` and `docs/spec.md`; the backend contract is owned by `ADISAK-PORNCHAROEN/ocr-backend` and documented in its `docs/frontend-api.md`.
 
 ## Read by task
 

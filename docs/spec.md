@@ -53,7 +53,7 @@
 
 - Prefer externally observable user behavior over component internals; use the browser UI and a controllable HTTP backend fixture as the primary seam. Test the BFF against that fixture, including multipart and image responses; repeat critical flows against the real backend once available.
 - Exercise upload, polling termination, page navigation, edit/restore/copy, successful blank and failed pages, partial results, exports, expiry, deletion failure, stale responses, and keyboard/mobile behavior. Use focused tests for export data and boundary validation where useful.
-- The frontend has no existing application or test suite; there is no local test prior art. Use Vitest, React Testing Library and Playwright as the proposed tools.
+- Use Vitest and React Testing Library for focused behavior checks. Use Playwright through a controllable HTTP backend fixture for browser behavior. A separate local integration verifies the BFF against the companion backend.
 
 ## Out of Scope
 
@@ -61,4 +61,4 @@ Accounts, persistent history or drafts, multiple-file upload, processing selecte
 
 ## Further Notes
 
-The backend API is proposed and not implemented. Confirm limits, expiry, error/status shapes, OCR format, coordinate/image alignment, cleanup behavior and actual integration before treating the contract as final. Review the agreed frontend plan and domain glossary for context.
+The backend API is implemented in the companion repository and documented in `docs/frontend-api.md`. The local frontend integration verified the status and error shapes, limits, expiry, OCR text, line coordinates, page images, exports and deletion through the BFF. These checks use synthetic inputs on loopback; they do not measure OCR accuracy on a real-document corpus or establish public deployment settings. Review the frontend plan and domain glossary for context.

@@ -1,6 +1,6 @@
 # OCR Playground: ข้อเสนอ UX/UI
 
-สถานะ: **เลือกแบบ C — Paperflow แล้ว** เมื่อ 2026-11-22 ดูแนวทางที่เลือกใน [DESIGN.md](../../DESIGN.md) ต้นแบบเป็นภาพจำลอง HTML เปิดในเบราว์เซอร์ได้ ยังไม่ใช่ frontend ที่เชื่อม backend แล้ว
+สถานะ: **เลือกแบบ C — Paperflow แล้ว** เมื่อ 2026-11-22 ดูแนวทางและผลตรวจ UI จริงใน [DESIGN.md](../../DESIGN.md) และ [ภาพ desktop](implemented-desktop.png) หรือ [ภาพ mobile](implemented-mobile.png) ส่วนต้นแบบ HTML เป็นภาพจำลองและไม่เชื่อม OCR
 
 อ้างอิงขอบเขตจาก [แผน frontend](../frontend-plan.md), [product](../../PRODUCT.md) และ [รายการ tickets](../ticket-draft.md) ซึ่งเผยแพร่เป็น GitHub issues แล้ว
 
@@ -34,7 +34,7 @@
 - สีต้นแบบ: พื้น `#f1f2fa`, สีหลัก `#385e98`, พื้นเอกสาร `#fffefb`; ใช้ตัวอักษรไทย sans
 - พื้นที่บนมือถือ: เรียงส่วนรับไฟล์และ workspace ในแนวตั้ง พร้อมคงลำดับขั้นตอนให้อ่านได้
 
-แบบ C เป็นแนวทางที่เลือก ค่าสีและฟอนต์ในต้นแบบเป็นจุดเริ่มต้นสำหรับ implementation และต้องตรวจ contrast และฟอนต์จริง ภาพ desktop และ mobile จับจากต้นแบบที่ความกว้าง 1440px และ 500px ตามลำดับ จึงยังต้องตรวจ viewport ที่แคบกว่าในการพัฒนาจริง
+แบบ C เป็นแนวทางที่เลือก สีและฟอนต์ปัจจุบันอยู่ใน CSS ของแอป ภาพ implementation แสดงงาน OCR สังเคราะห์สองหน้าที่ความกว้าง 1440px และ 390px; browser tests ตรวจการจัดวางมือถือและ keyboard flow
 
 ## พฤติกรรมที่ทุกแบบต้องรักษา
 
@@ -47,7 +47,7 @@
 
 ## หลังเลือก
 
-นำแบบ C ใน `DESIGN.md` ไปออกแบบสถานะที่เหลือและทดสอบ accessibility ใน implementation จริง
+ดู [แนวทาง Paperflow ที่ใช้งานจริง](../../DESIGN.md) และภาพ desktop กับ mobile ด้านบน แอปครอบคลุมสถานะงานหลักและมี browser tests สำหรับ keyboard กับ mobile
 
 ## Direction contract
 
