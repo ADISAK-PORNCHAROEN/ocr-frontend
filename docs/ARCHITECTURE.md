@@ -162,8 +162,8 @@ family, so no independent model family could review the candidates.
 Issues remain the acceptance checklist. This sequence records implementation
 order without restating their criteria.
 
-- [ ] Scaffold the app and native checks before feature work.
-- [ ] Implement the BFF, validated API adapter, and HTTP fixture for #4.
+- [x] Scaffold the app and native checks before feature work.
+- [x] Implement the BFF, validated API adapter, and HTTP fixture for #4.
 - [ ] Implement upload and terminal polling for #4 and #5.
 - [ ] Implement page review and memory-only editing for #6.
 - [ ] Implement complete TXT and JSON export for #7.

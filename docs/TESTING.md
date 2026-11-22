@@ -1,8 +1,10 @@
 # Testing
 
-Status: accepted testing strategy; the Next.js shell and harness are scaffolded
-on `develop`. One Playwright home-page smoke test passes; feature behavior and
-coverage baselines are not yet established.
+Status: accepted testing strategy; the Next.js shell, BFF and HTTP fixture are
+scaffolded on `develop`. Playwright passes one home-page smoke test and two BFF
+checks for multipart/JSON/binary forwarding, backend error forwarding and path
+rejection. Four Vitest checks cover job/page schema mapping. Full workflow
+behavior and coverage baselines are not yet established.
 
 ## Selection and evidence
 
