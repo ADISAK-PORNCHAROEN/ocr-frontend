@@ -8,10 +8,10 @@
   },
   "scripts": {
     "dev": "next dev --hostname 127.0.0.1",
-    "dev:e2e": "cross-env OCR_BACKEND_URL=http://127.0.0.1:4010 next dev --hostname 127.0.0.1 --port 3001",
+    "dev:e2e": "cross-env NEXT_DIST_DIR=.next-e2e OCR_BACKEND_URL=http://127.0.0.1:4010 OCR_APP_ORIGINS=http://127.0.0.1:3001 OCR_BACKEND_TIMEOUT_MS=1200 next dev --hostname 127.0.0.1 --port 3001",
     "build": "next build",
     "start": "next start --hostname 127.0.0.1",
-    "lint": "biome check src tests next.config.ts vitest.config.ts playwright.config.ts",
+    "lint": "biome check src tests next.config.ts vitest.config.mts playwright.config.ts",
     "typecheck": "tsc --noEmit",
     "test:unit": "vitest run",
     "test:e2e": "playwright test",
@@ -44,7 +44,6 @@
     "tailwindcss": "4.3.5",
     "typescript": "5.9.3",
     "vite": "8.3.8",
-    "vite-tsconfig-paths": "6.1.1",
     "vitest": "5.1.1"
   }
 }
