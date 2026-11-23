@@ -25,6 +25,10 @@ Desktop and 390 × 844 mobile layouts were checked without horizontal overflow.
 The React profile and its measured change are documented in
 [`performance/ocr-render-profile.md`](performance/ocr-render-profile.md).
 
+After the later UI clarification removed all budget copy, `pnpm lint` and
+`pnpm typecheck` passed again. Unit, browser E2E, and build results in the table
+below predate that presentation-only change and were not rerun afterward.
+
 | Check | Result |
 | --- | --- |
 | `pnpm lint` | Passed; Biome checked 32 files. |
