@@ -48,3 +48,29 @@ test("shows backend file validation errors without retrying the upload", async (
 	await expect(page.locator(".upload-card [role=alert]")).toContainText("ไฟล์มีขนาดเกินขีดจำกัด");
 	await expect(page.getByRole("button", { name: "เริ่มถอดข้อความ" })).toBeEnabled();
 });
+
+test("accepts more pages than the former client ceiling and forwards pixel-budget errors", async ({
+	page,
+}) => {
+	await page.goto("/");
+	await page.getByLabel("เลือกไฟล์ JPG, PNG หรือ PDF").setInputFiles({
+		name: "profile-24.pdf",
+		mimeType: "application/pdf",
+		buffer: Buffer.from("fixture image bytes"),
+	});
+	await page.getByRole("button", { name: "เริ่มถอดข้อความ" }).click();
+	await page.getByRole("button", { name: "หน้า 24 ล้มเหลว" }).waitFor({ timeout: 12_000 });
+	await expect(page.locator(".page-tab")).toHaveCount(24);
+	await expect(page.getByText("24 หน้า", { exact: true })).toBeVisible();
+
+	await page.goto("/");
+	await page.getByLabel("เลือกไฟล์ JPG, PNG หรือ PDF").setInputFiles({
+		name: "pixel-exceeded.pdf",
+		mimeType: "application/pdf",
+		buffer: Buffer.from("fixture image bytes"),
+	});
+	await page.getByRole("button", { name: "เริ่มถอดข้อความ" }).click();
+	await expect(page.locator(".upload-card [role=alert]")).toContainText(
+		"จำนวนพิกเซลรวมของเอกสารเกินขีดจำกัด",
+	);
+});

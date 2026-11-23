@@ -25,6 +25,10 @@ function formatBytes(bytes: number) {
 		: `${Math.ceil(bytes / 1024).toLocaleString("th-TH")} KB`;
 }
 
+function formatPixels(pixels: number) {
+	return `${(pixels / 1_000_000).toLocaleString("th-TH", { maximumFractionDigits: 1 })} ล้านพิกเซล`;
+}
+
 function resolveMediaType(file: File) {
 	const extension = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
 	const extensionType = fileTypes.get(extension);
@@ -166,10 +170,20 @@ export function UploadPanel({
 				) : null}
 
 				{capabilities ? (
-					<p className="limit-note">
-						ไม่เกิน {formatBytes(capabilities.maxUploadBytes)} · สูงสุด{" "}
-						{capabilities.maxPages.toLocaleString("th-TH")} หน้า
-					</p>
+					<dl className="limit-list" aria-label="ขีดจำกัดจาก backend">
+						<div>
+							<dt>ขนาดไฟล์</dt>
+							<dd>ไม่เกิน {formatBytes(capabilities.maxUploadBytes)}</dd>
+						</div>
+						<div>
+							<dt>พิกเซลต่อหน้า</dt>
+							<dd>ไม่เกิน {formatPixels(capabilities.maxPagePixels)}</dd>
+						</div>
+						<div>
+							<dt>พิกเซลรวมใน PDF</dt>
+							<dd>ไม่เกิน {formatPixels(capabilities.maxTotalPixels)}</dd>
+						</div>
+					</dl>
 				) : capabilitiesError ? (
 					<p className="limit-note">ยังอ่านขีดจำกัดจาก backend ไม่ได้ ระบบจะตรวจไฟล์อีกครั้งเมื่อส่ง</p>
 				) : null}
