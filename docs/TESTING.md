@@ -17,10 +17,11 @@ and a later job read returned `404`. The response's `Location` was rewritten to
 the same-origin BFF route. `ocr_duration_ms` was present for these inference
 calls and is stored as an optional nullable field; the UI does not display it.
 
-The upload screen retains the backend's byte and pixel limits and omits the page
-count row. E2E also overrides capabilities with the stale numeric value `20` to
-verify the screen still does not show a fixed page ceiling. Desktop and 390 ×
-844 mobile layouts were checked; the limits fit without horizontal overflow.
+The upload screen does not render backend byte, pixel, or page-count budgets.
+The browser suite also overrides capabilities with the stale numeric value `20`
+to ensure backend budgets remain out of the UX. The frontend still checks file
+size before upload and the backend remains authoritative for document limits.
+Desktop and 390 × 844 mobile layouts were checked without horizontal overflow.
 The React profile and its measured change are documented in
 [`performance/ocr-render-profile.md`](performance/ocr-render-profile.md).
 

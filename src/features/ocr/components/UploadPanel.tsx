@@ -6,7 +6,6 @@ import type { Capabilities } from "../api/schema";
 
 type Props = {
 	capabilities: Capabilities | undefined;
-	capabilitiesError: boolean;
 	uploading: boolean;
 	uploadError: OcrRequestError | null;
 	onUpload: (file: File) => void;
@@ -25,10 +24,6 @@ function formatBytes(bytes: number) {
 		: `${Math.ceil(bytes / 1024).toLocaleString("th-TH")} KB`;
 }
 
-function formatPixels(pixels: number) {
-	return `${(pixels / 1_000_000).toLocaleString("th-TH", { maximumFractionDigits: 1 })} ล้านพิกเซล`;
-}
-
 function resolveMediaType(file: File) {
 	const extension = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
 	const extensionType = fileTypes.get(extension);
@@ -37,13 +32,7 @@ function resolveMediaType(file: File) {
 	return extensionType;
 }
 
-export function UploadPanel({
-	capabilities,
-	capabilitiesError,
-	uploading,
-	uploadError,
-	onUpload,
-}: Props) {
+export function UploadPanel({ capabilities, uploading, uploadError, onUpload }: Props) {
 	const inputRef = useRef<HTMLInputElement>(null);
 	const [file, setFile] = useState<File | null>(null);
 	const [validationError, setValidationError] = useState<string | null>(null);
@@ -59,9 +48,7 @@ export function UploadPanel({
 		}
 		if (capabilities && candidate.size > capabilities.maxUploadBytes) {
 			setFile(null);
-			setValidationError(
-				`ไฟล์มีขนาด ${formatBytes(candidate.size)} เกินขีดจำกัด ${formatBytes(capabilities.maxUploadBytes)}`,
-			);
+			setValidationError("ไฟล์มีขนาดเกินกว่าที่ระบบรองรับ");
 			return;
 		}
 		setFile(candidate);
@@ -167,25 +154,6 @@ export function UploadPanel({
 						<p>{uploadError.message}</p>
 						{uncertainUpload ? <p>หากต้องการลองอีกครั้ง ให้กดส่งไฟล์นี้ด้วยตนเอง</p> : null}
 					</div>
-				) : null}
-
-				{capabilities ? (
-					<dl className="limit-list" aria-label="ขีดจำกัดจาก backend">
-						<div>
-							<dt>ขนาดไฟล์</dt>
-							<dd>ไม่เกิน {formatBytes(capabilities.maxUploadBytes)}</dd>
-						</div>
-						<div>
-							<dt>พิกเซลต่อหน้า</dt>
-							<dd>ไม่เกิน {formatPixels(capabilities.maxPagePixels)}</dd>
-						</div>
-						<div>
-							<dt>พิกเซลรวมใน PDF</dt>
-							<dd>ไม่เกิน {formatPixels(capabilities.maxTotalPixels)}</dd>
-						</div>
-					</dl>
-				) : capabilitiesError ? (
-					<p className="limit-note">ยังอ่านขีดจำกัดจาก backend ไม่ได้ ระบบจะตรวจไฟล์อีกครั้งเมื่อส่ง</p>
 				) : null}
 
 				<button

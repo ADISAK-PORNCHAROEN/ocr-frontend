@@ -211,8 +211,7 @@ textarea {
 	font-size: 0.875rem;
 }
 
-.selected-file-copy span,
-.limit-note {
+.selected-file-copy span {
 	color: var(--text-secondary);
 	font-size: 0.8rem;
 }
@@ -245,34 +244,6 @@ textarea {
 .error-callout p {
 	margin: 0.35rem 0 0;
 	color: var(--text-primary);
-}
-
-.limit-note {
-	margin: 0.85rem 0 0;
-	text-align: center;
-}
-
-.limit-list {
-	display: grid;
-	gap: 0.35rem;
-	margin: 0.9rem 0 0;
-	color: var(--text-secondary);
-	font-size: 0.8rem;
-}
-
-.limit-list > div {
-	display: flex;
-	justify-content: space-between;
-	gap: 0.75rem;
-	border-top: 1px solid var(--border);
-	padding-top: 0.4rem;
-}
-
-.limit-list dd {
-	margin: 0;
-	color: var(--text-primary);
-	font-weight: 600;
-	text-align: right;
 }
 
 .primary-button {

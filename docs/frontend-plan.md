@@ -52,8 +52,8 @@ Reusable UI primitives ปัจจุบันมี button, card, progress แ
 
 ## ผลตรวจจาก backend
 
-- Endpoint, status, error และ schema ตรงกับ [สัญญา API ของ backend](https://github.com/ADISAK-PORNCHAROEN/ocr-backend/blob/develop/docs/frontend-api.md) ใน local browser run; capabilities endpoint ส่งค่า limit ที่หน้าอัปโหลดใช้
-- สัญญา backend ปัจจุบันไม่มีเพดานจำนวนหน้าตายตัว หน้าอัปโหลดจึงไม่แสดงจำนวนหน้าสูงสุด; ยังคงแสดงและใช้ขนาดไฟล์, พิกเซลต่อหน้า และพิกเซลรวมของ PDF จาก capabilities โดย backend เป็นผู้ตัดสินข้อจำกัดที่ใช้กับเอกสารจริง
+- Endpoint, status, error และ schema ตรงกับ [สัญญา API ของ backend](https://github.com/ADISAK-PORNCHAROEN/ocr-backend/blob/develop/docs/frontend-api.md) ใน local browser run; capabilities ใช้ตรวจชนิดและขนาดไฟล์ก่อนส่ง ส่วน backend เป็นผู้ตรวจข้อจำกัดของเอกสาร
+- หน้าอัปโหลดไม่แสดงเพดานขนาดไฟล์ พิกเซล หรือจำนวนหน้า; backend ยังคงบังคับขนาดไฟล์และ pixel budgets โดยไม่มีเพดานจำนวนหน้าตายตัว
 - ทดสอบ PDF สองหน้ากับภาพ PNG ผ่าน Next.js BFF แล้ว ได้ OCR text, ภาพหน้า, TXT, JSON และพิกัดบรรทัด จากนั้น DELETE สำเร็จ
 - Backend TTL เป็นทางสำรองเมื่อปิดแท็บหรือ DELETE ล้มเหลว ทดสอบหมดอายุด้วย TTL 60 วินาทีแล้วได้ `404` และไม่มีไฟล์ใน isolated storage
 - accuracy กับชุดเอกสารจริงและค่าตั้งของ production ยังไม่ได้วัด การตรวจนี้ยืนยัน local contract เท่านั้น

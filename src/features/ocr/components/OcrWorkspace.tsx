@@ -105,7 +105,6 @@ export function OcrWorkspace() {
 					) : null}
 					<UploadPanel
 						capabilities={capabilities.data}
-						capabilitiesError={Boolean(capabilities.error)}
 						uploading={upload.isPending}
 						uploadError={uploadError}
 						onUpload={submit}
