@@ -30,9 +30,9 @@ describe("OCR API wire schemas", () => {
 			capabilitiesWireSchema.parse({
 				supported_media_types: ["application/pdf"],
 				max_upload_bytes: 5_000_000,
-				max_pages: 20,
+				max_pages: null,
 				pdf_dpi: 150,
-				max_page_pixels: 20_000_000,
+				max_page_pixels: 25_000_000,
 				max_total_pixels: 80_000_000,
 				max_pending_jobs: 2,
 				max_retained_jobs: 5,
@@ -46,7 +46,9 @@ describe("OCR API wire schemas", () => {
 		expect(mapped).toEqual({
 			supportedMediaTypes: ["application/pdf"],
 			maxUploadBytes: 5_000_000,
-			maxPages: 20,
+			maxPages: null,
+			maxPagePixels: 25_000_000,
+			maxTotalPixels: 80_000_000,
 		});
 		expect(mapped).not.toHaveProperty("max_upload_bytes");
 	});
@@ -73,6 +75,31 @@ describe("OCR API wire schemas", () => {
 		expect(mapped.status).toBe("completed");
 		expect(mapped.originalText).toBe("");
 		expect(mapped.imageUrl).toBe(`/api/ocr/jobs/${baseJob.id}/pages/2/image`);
+		expect(mapped.ocrDurationMs).toBeNull();
+	});
+
+	it("accepts nullable or omitted inference duration without treating it as total processing time", () => {
+		const basePage = {
+			page_number: 1,
+			status: "completed",
+			has_text: true,
+			original_text: "ผล OCR",
+			lines: [],
+			image_size: { width: 1, height: 1 },
+			error: null,
+			image_url: "/api/v1/ocr/jobs/00000000-0000-4000-8000-000000000001/pages/1/image",
+		};
+
+		expect(mapPage(pageDetailWireSchema.parse({ ...basePage, ocr_duration_ms: 142.37 }), baseJob.id))
+			.toMatchObject({ ocrDurationMs: 142.37 });
+		expect(mapPage(pageDetailWireSchema.parse({ ...basePage, ocr_duration_ms: null }), baseJob.id))
+			.toMatchObject({ ocrDurationMs: null });
+		expect(mapPage(pageDetailWireSchema.parse(basePage), baseJob.id)).toMatchObject({
+			ocrDurationMs: null,
+		});
+		expect(
+			pageDetailWireSchema.safeParse({ ...basePage, ocr_duration_ms: -1 }).success,
+		).toBe(false);
 	});
 
 	it("requires a real error payload for failed pages", () => {
