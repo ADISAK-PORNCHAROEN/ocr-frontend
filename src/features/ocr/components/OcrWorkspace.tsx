@@ -268,6 +268,7 @@ function ActiveJob({ initialJob, onEnd }: { initialJob: Job; onEnd: () => void }
 							originalText: null,
 							lines: null,
 							imageSize: null,
+							ocrDurationMs: null,
 						},
 				);
 			const snapshot = { job, pages: exportPages, drafts: exportDrafts, revision: exportRevision };

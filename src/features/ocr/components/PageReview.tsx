@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import type { Dispatch } from "react";
-import { useState } from "react";
+import { memo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { OcrRequestError } from "../api/client";
@@ -28,6 +28,38 @@ function pageLabel(page: PageSummary) {
 	if (page.status === "processing") return "กำลังทำ";
 	return page.hasText ? "สำเร็จ" : "หน้าว่าง";
 }
+
+const PageStrip = memo(function PageStrip({
+	pages,
+	selectedPage,
+	dispatch,
+}: {
+	pages: PageSummary[];
+	selectedPage: number;
+	dispatch: Dispatch<SessionAction>;
+}) {
+	return (
+		<nav className="page-strip" aria-label="เลือกหน้าเอกสาร">
+			{pages.map((item) => (
+				<button
+					key={item.number}
+					type="button"
+					className={`page-tab${selectedPage === item.number ? " is-selected" : ""}`}
+					aria-pressed={selectedPage === item.number}
+					onClick={() => dispatch({ type: "select-page", pageNumber: item.number })}
+				>
+					<span>หน้า {item.number}</span>
+					<span className={`page-state page-state-${item.status}`}>
+						<span className="state-symbol" aria-hidden="true">
+							{item.status === "failed" ? "!" : item.hasText === false ? "–" : "✓"}
+						</span>
+						{pageLabel(item)}
+					</span>
+				</button>
+			))}
+		</nav>
+	);
+});
 
 function PageImage({
 	imageUrl,
@@ -86,25 +118,7 @@ export function PageReview({
 				<span className="page-count">{pages.length} หน้า</span>
 			</div>
 
-			<nav className="page-strip" aria-label="เลือกหน้าเอกสาร">
-				{pages.map((item) => (
-					<button
-						key={item.number}
-						type="button"
-						className={`page-tab${selectedPage === item.number ? " is-selected" : ""}`}
-						aria-pressed={selectedPage === item.number}
-						onClick={() => dispatch({ type: "select-page", pageNumber: item.number })}
-					>
-						<span>หน้า {item.number}</span>
-						<span className={`page-state page-state-${item.status}`}>
-							<span className="state-symbol" aria-hidden="true">
-								{item.status === "failed" ? "!" : item.hasText === false ? "–" : "✓"}
-							</span>
-							{pageLabel(item)}
-						</span>
-					</button>
-				))}
-			</nav>
+			<PageStrip pages={pages} selectedPage={selectedPage} dispatch={dispatch} />
 
 			{!summary ? (
 				<div className="empty-state" role="status">
