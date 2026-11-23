@@ -18,6 +18,7 @@ test("BFF forwards multipart requests, JSON and binary responses to the HTTP fix
 		},
 	});
 	expect(upload.status()).toBe(202);
+	expect(upload.headers().location).toMatch(/^\/api\/ocr\/jobs\/[0-9a-f-]{36}$/i);
 	const created = await upload.json();
 	const jobId = created.id as string;
 	expect(created.filename).toBe("fixture.pdf");
@@ -25,11 +26,58 @@ test("BFF forwards multipart requests, JSON and binary responses to the HTTP fix
 	const job = await request.get(`/api/ocr/jobs/${jobId}`);
 	expect(job.status()).toBe(200);
 	expect((await job.json()).id).toBe(jobId);
+	const pageBeyondFormerCeiling = await request.get(`/api/ocr/jobs/${jobId}/pages/1000000`);
+	expect(pageBeyondFormerCeiling.status()).toBe(404);
+	expect((await pageBeyondFormerCeiling.json()).error.code).toBe("PAGE_NOT_FOUND");
 
 	const image = await request.get(`/api/ocr/jobs/${jobId}/pages/1/image`);
 	expect(image.status()).toBe(200);
 	expect(image.headers()["content-type"]).toContain("image/png");
 	expect((await image.body()).byteLength).toBeGreaterThan(20);
+});
+
+test("BFF preserves the backend retry hint and forwards new pixel-limit errors", async ({
+	request,
+}) => {
+	const queueFull = await request.post("/api/ocr/jobs", {
+		headers: { origin: "http://127.0.0.1:3001" },
+		multipart: {
+			file: {
+				name: "queue-full.pdf",
+				mimeType: "application/pdf",
+				buffer: Buffer.from("fixture image bytes"),
+			},
+		},
+	});
+	expect(queueFull.status()).toBe(503);
+	expect(queueFull.headers()["retry-after"]).toBe("3");
+	expect((await queueFull.json()).error.code).toBe("JOB_QUEUE_FULL");
+
+	const pixelLimit = await request.post("/api/ocr/jobs", {
+		headers: { origin: "http://127.0.0.1:3001" },
+		multipart: {
+			file: {
+				name: "pixel-exceeded.pdf",
+				mimeType: "application/pdf",
+				buffer: Buffer.from("fixture image bytes"),
+			},
+		},
+	});
+	expect(pixelLimit.status()).toBe(422);
+	expect((await pixelLimit.json()).error.code).toBe("DOCUMENT_PIXEL_LIMIT_EXCEEDED");
+
+	const unsafeLocation = await request.post("/api/ocr/jobs", {
+		headers: { origin: "http://127.0.0.1:3001" },
+		multipart: {
+			file: {
+				name: "unsafe-location.pdf",
+				mimeType: "application/pdf",
+				buffer: Buffer.from("fixture image bytes"),
+			},
+		},
+	});
+	expect(unsafeLocation.status()).toBe(202);
+	expect(unsafeLocation.headers().location).toBeUndefined();
 });
 
 test("BFF rejects arbitrary paths and preserves backend errors", async ({ request }) => {
