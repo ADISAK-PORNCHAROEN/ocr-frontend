@@ -29,7 +29,7 @@ export const jobWireSchema = z.object({
 export const capabilitiesWireSchema = z.object({
 	supported_media_types: z.array(z.string()),
 	max_upload_bytes: z.number().int().positive(),
-	max_pages: z.number().int().positive(),
+	max_pages: z.number().int().positive().nullable(),
 	pdf_dpi: z.number().int().positive(),
 	max_page_pixels: z.number().int().positive(),
 	max_total_pixels: z.number().int().positive(),
@@ -46,7 +46,9 @@ export type CapabilitiesWire = z.infer<typeof capabilitiesWireSchema>;
 export type Capabilities = {
 	supportedMediaTypes: string[];
 	maxUploadBytes: number;
-	maxPages: number;
+	maxPages: number | null;
+	maxPagePixels: number;
+	maxTotalPixels: number;
 };
 
 const lineWireSchema = z.object({
@@ -66,6 +68,7 @@ const pageWireSchema = z
 			.object({ width: z.number().int().positive(), height: z.number().int().positive() })
 			.nullable(),
 		error: z.object({ code: z.string(), message: z.string() }).nullable(),
+		ocr_duration_ms: z.number().finite().nonnegative().nullable().optional(),
 		image_url: z.string().startsWith("/api/v1/ocr/jobs/"),
 	})
 	.superRefine((page, context) => {
@@ -118,6 +121,7 @@ export type PageDetail = PageSummary & {
 	originalText: string | null;
 	lines: OcrLine[] | null;
 	imageSize: PageWire["image_size"];
+	ocrDurationMs: number | null;
 };
 
 export function mapJob(wire: JobWire): Job {
@@ -143,6 +147,8 @@ export function mapCapabilities(wire: CapabilitiesWire): Capabilities {
 		supportedMediaTypes: wire.supported_media_types,
 		maxUploadBytes: wire.max_upload_bytes,
 		maxPages: wire.max_pages,
+		maxPagePixels: wire.max_page_pixels,
+		maxTotalPixels: wire.max_total_pixels,
 	};
 }
 
@@ -156,5 +162,6 @@ export function mapPage(wire: PageWire, jobId: string): PageDetail {
 		originalText: wire.original_text,
 		lines: wire.lines,
 		imageSize: wire.image_size,
+		ocrDurationMs: wire.ocr_duration_ms ?? null,
 	};
 }

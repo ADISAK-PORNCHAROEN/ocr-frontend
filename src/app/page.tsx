@@ -31,9 +31,6 @@ export default function HomePage() {
 						</span>
 						<span>OCR Playground</span>
 					</Link>
-					<p className="hidden rounded-full border border-[var(--border)] bg-white/80 px-3 py-1.5 text-xs font-medium text-[var(--text-secondary)] sm:block">
-						พื้นที่ทำงานชั่วคราว
-					</p>
 				</header>
 				<OcrWorkspace />
 			</div>

@@ -2,7 +2,7 @@ import "server-only";
 
 const DEFAULT_UPSTREAM_TIMEOUT_MS = 60_000;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const PAGE_NUMBER = /^[1-9]\d{0,5}$/;
+const PAGE_NUMBER = /^[1-9]\d*$/;
 
 type Route = { path: string; methods: readonly string[] };
 
@@ -34,7 +34,7 @@ function resolveRoute(segments: string[]): Route | null {
 		segments.length === 4 &&
 		segments[0] === "jobs" &&
 		UUID.test(segments[1]) &&
-		PAGE_NUMBER.test(segments[3]) &&
+		isPageNumber(segments[3]) &&
 		segments[2] === "pages"
 	) {
 		return {
@@ -46,7 +46,7 @@ function resolveRoute(segments: string[]): Route | null {
 		segments.length === 5 &&
 		segments[0] === "jobs" &&
 		UUID.test(segments[1]) &&
-		PAGE_NUMBER.test(segments[3]) &&
+		isPageNumber(segments[3]) &&
 		segments[2] === "pages" &&
 		segments[4] === "image"
 	) {
@@ -56,6 +56,26 @@ function resolveRoute(segments: string[]): Route | null {
 		};
 	}
 	return null;
+}
+
+function isPageNumber(value: string) {
+	return PAGE_NUMBER.test(value) && Number.isSafeInteger(Number(value));
+}
+
+function sameOriginJobLocation(value: string | null, target: URL) {
+	if (!value) return null;
+	try {
+		const location = new URL(value, target);
+		const match =
+			/^\/api\/v1\/ocr\/jobs\/([0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i.exec(
+				location.pathname,
+			);
+		if (location.origin !== target.origin || location.search || location.hash || !match)
+			return null;
+		return `/api/ocr/jobs/${match[1]}`;
+	} catch {
+		return null;
+	}
 }
 
 function backendBaseUrl(): URL {
@@ -155,6 +175,10 @@ export async function forwardOcrRequest(request: Request, segments: string[]) {
 		const responseHeaders = new Headers({ "cache-control": "no-store" });
 		const upstreamType = upstream.headers.get("content-type");
 		if (upstreamType) responseHeaders.set("content-type", upstreamType);
+		const retryAfter = upstream.headers.get("retry-after");
+		if (retryAfter) responseHeaders.set("retry-after", retryAfter);
+		const location = sameOriginJobLocation(upstream.headers.get("location"), target);
+		if (location) responseHeaders.set("location", location);
 		return new Response(upstream.body, {
 			status: upstream.status,
 			headers: responseHeaders,

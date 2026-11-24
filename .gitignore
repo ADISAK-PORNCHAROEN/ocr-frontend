@@ -5,7 +5,12 @@
 /.next/
 /.next-e2e/
 /.next-live/
+/.next-prof/
+/.next-real/
+/.next-update/
 /next-env.d.ts
+/.audit/*
+!/.audit/ocr-api-ux-performance.tsv
 /docs/design/implemented-desktop-full.png
 /out/
 /coverage/

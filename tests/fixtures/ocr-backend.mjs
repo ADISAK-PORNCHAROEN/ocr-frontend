@@ -1,7 +1,7 @@
 import { createServer } from "node:http";
 
 const host = "127.0.0.1";
-const port = 4010;
+const port = Number(process.env.OCR_FIXTURE_PORT ?? 4010);
 const jobs = new Map();
 const pagePng = Buffer.from(
 	"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jW9sAAAAASUVORK5CYII=",
@@ -13,10 +13,11 @@ let activeJobId = null;
 let uncertainAttempts = 0;
 let abortedUpstreamResponses = 0;
 
-function json(response, status, value) {
+function json(response, status, value, extraHeaders = {}) {
 	response.writeHead(status, {
 		"content-type": "application/json",
 		"cache-control": "no-store",
+		...extraHeaders,
 	});
 	response.end(JSON.stringify(value));
 }
@@ -25,9 +26,11 @@ function createJob(filename) {
 	const suffix = nextJobNumber.toString(16).padStart(12, "0");
 	const id = `00000000-0000-4000-8000-${suffix}`;
 	nextJobNumber += 1;
+	const pageCount = Number(filename.match(/^profile-(\d+)\.pdf$/i)?.[1] ?? 4);
 	const job = {
 		id,
 		filename,
+		pageCount,
 		statusReads: 0,
 		deleteReads: 0,
 		detailReads: [],
@@ -44,7 +47,14 @@ function createJob(filename) {
 }
 
 function jobResponse(job, status = "queued") {
-	const completed = status === "queued" ? 0 : status === "partially_completed" ? 3 : 2;
+	const completed =
+		status === "queued"
+			? 0
+			: status === "processing"
+				? Math.floor(job.pageCount / 2)
+				: status === "partially_completed"
+					? job.pageCount - 1
+					: job.pageCount;
 	const failed = status === "partially_completed" ? 1 : 0;
 	const processing = status === "processing" ? 1 : 0;
 	return {
@@ -53,7 +63,7 @@ function jobResponse(job, status = "queued") {
 		media_type: job.filename.toLowerCase().endsWith(".pdf") ? "application/pdf" : "image/png",
 		status,
 		progress: {
-			total_pages: 4,
+			total_pages: job.pageCount,
 			completed_pages: completed,
 			failed_pages: failed,
 			processing_pages: processing,
@@ -66,44 +76,55 @@ function jobResponse(job, status = "queued") {
 
 function page(job, pageNumber) {
 	const imageUrl = `/api/v1/ocr/jobs/${job.id}/pages/${pageNumber}/image`;
-	const values =
-		pageNumber === 1 && job.filename === "slow-page.pdf"
-			? {
-					original_text: "ข้อมูลผลลัพธ์จากงานเก่า",
-					lines: [
-						{
-							text: "ข้อมูลผลลัพธ์จากงานเก่า",
-							confidence: 0.94,
-							box: { x1: 10, y1: 10, x2: 180, y2: 32 },
-						},
-					],
-				}
-			: pageNumber === 1
-				? {
-						original_text: "ใบเสร็จรับเงิน\nยอดรวม 250 บาท",
-						lines: [
-							{
-								text: "ใบเสร็จรับเงิน",
-								confidence: 0.98,
-								box: { x1: 10, y1: 10, x2: 180, y2: 32 },
-							},
-						],
-					}
-				: pageNumber === 2
-					? { original_text: "", lines: [] }
-					: pageNumber === 3
-						? {
-								original_text: "หน้านี้ยังไม่เคยเปิดก่อนดาวน์โหลด",
-								lines: [
-									{
-										text: "หน้านี้ยังไม่เคยเปิดก่อนดาวน์โหลด",
-										confidence: 0.91,
-										box: { x1: 5, y1: 4, x2: 90, y2: 24 },
-									},
-								],
-							}
-						: null;
-	const status = pageNumber === 4 ? "failed" : "completed";
+	let values;
+	if (pageNumber === 1 && job.filename === "slow-page.pdf") {
+		values = {
+			original_text: "ข้อมูลผลลัพธ์จากงานเก่า",
+			lines: [
+				{
+					text: "ข้อมูลผลลัพธ์จากงานเก่า",
+					confidence: 0.94,
+					box: { x1: 10, y1: 10, x2: 180, y2: 32 },
+				},
+			],
+		};
+	} else if (pageNumber === 1) {
+		values = {
+			original_text: "ใบเสร็จรับเงิน\nยอดรวม 250 บาท",
+			lines: [
+				{
+					text: "ใบเสร็จรับเงิน",
+					confidence: 0.98,
+					box: { x1: 10, y1: 10, x2: 180, y2: 32 },
+				},
+			],
+		};
+	} else if (pageNumber === 2) {
+		values = { original_text: "", lines: [] };
+	} else if (pageNumber === 3) {
+		values = {
+			original_text: "หน้านี้ยังไม่เคยเปิดก่อนดาวน์โหลด",
+			lines: [
+				{
+					text: "หน้านี้ยังไม่เคยเปิดก่อนดาวน์โหลด",
+					confidence: 0.91,
+					box: { x1: 5, y1: 4, x2: 90, y2: 24 },
+				},
+			],
+		};
+	} else {
+		values = {
+			original_text: `ผล OCR ตัวอย่างหน้า ${pageNumber}`,
+			lines: [
+				{
+					text: `ผล OCR ตัวอย่างหน้า ${pageNumber}`,
+					confidence: 0.9,
+					box: { x1: 5, y1: 4, x2: 90, y2: 24 },
+				},
+			],
+		};
+	}
+	const status = pageNumber === job.pageCount ? "failed" : "completed";
 	return {
 		page_number: pageNumber,
 		status,
@@ -111,6 +132,7 @@ function page(job, pageNumber) {
 		original_text: status === "completed" ? values.original_text : null,
 		lines: status === "completed" ? values.lines : null,
 		image_size: status === "completed" ? { width: 1, height: 1 } : null,
+		ocr_duration_ms: status === "failed" ? 78.6 : pageNumber === 1 ? 142.37 : null,
 		error:
 			status === "failed" ? { code: "OCR_PAGE_FAILED", message: "อ่านข้อความหน้านี้ไม่สำเร็จ" } : null,
 		image_url: imageUrl,
@@ -169,10 +191,10 @@ const server = createServer(async (request, response) => {
 	if (path === "/api/v1/ocr/capabilities" && request.method === "GET") {
 		json(response, 200, {
 			supported_media_types: ["image/jpeg", "image/png", "application/pdf"],
-			max_upload_bytes: 5_000_000,
-			max_pages: 20,
+			max_upload_bytes: 20_971_520,
+			max_pages: null,
 			pdf_dpi: 150,
-			max_page_pixels: 20_000_000,
+			max_page_pixels: 25_000_000,
 			max_total_pixels: 80_000_000,
 			max_pending_jobs: 2,
 			max_retained_jobs: 5,
@@ -201,6 +223,31 @@ const server = createServer(async (request, response) => {
 			});
 			return;
 		}
+		if (filename === "queue-full.pdf") {
+			json(
+				response,
+				503,
+				{
+					error: {
+						code: "JOB_QUEUE_FULL",
+						message: "ระบบกำลังประมวลงานเต็ม โปรดลองอีกครั้งภายหลัง",
+						retryable: true,
+					},
+				},
+				{ "retry-after": "3" },
+			);
+			return;
+		}
+		if (filename === "pixel-exceeded.pdf") {
+			json(response, 422, {
+				error: {
+					code: "DOCUMENT_PIXEL_LIMIT_EXCEEDED",
+					message: "จำนวนพิกเซลรวมของเอกสารเกินขีดจำกัด",
+					retryable: false,
+				},
+			});
+			return;
+		}
 		const job = createJob(filename);
 		if (filename === "slow-timeout.pdf") {
 			await new Promise((resolve) => setTimeout(resolve, 2_500));
@@ -211,7 +258,11 @@ const server = createServer(async (request, response) => {
 			response.destroy();
 			return;
 		}
-		json(response, 202, jobResponse(job));
+		const location =
+			filename === "unsafe-location.pdf"
+				? `https://untrusted.example/api/v1/ocr/jobs/${job.id}?token=private`
+				: `/api/v1/ocr/jobs/${job.id}`;
+		json(response, 202, jobResponse(job), { location });
 		return;
 	}
 
@@ -261,13 +312,15 @@ const server = createServer(async (request, response) => {
 			jobNotFound(response);
 			return;
 		}
-		json(response, 200, { pages: [page(job, 1), page(job, 2), page(job, 3), page(job, 4)] });
+		json(response, 200, {
+			pages: Array.from({ length: job.pageCount }, (_, index) => page(job, index + 1)),
+		});
 		return;
 	}
 	const pageMatch = suffix.match(/^\/pages\/(\d+)$/);
 	if (pageMatch && request.method === "GET") {
 		const pageNumber = Number(pageMatch[1]);
-		if (pageNumber < 1 || pageNumber > 4) {
+		if (pageNumber < 1 || pageNumber > job.pageCount) {
 			json(response, 404, {
 				error: { code: "PAGE_NOT_FOUND", message: "ไม่พบหน้า", retryable: false },
 			});

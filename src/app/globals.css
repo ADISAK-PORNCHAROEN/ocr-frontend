@@ -211,8 +211,7 @@ textarea {
 	font-size: 0.875rem;
 }
 
-.selected-file-copy span,
-.limit-note {
+.selected-file-copy span {
 	color: var(--text-secondary);
 	font-size: 0.8rem;
 }
@@ -245,11 +244,6 @@ textarea {
 .error-callout p {
 	margin: 0.35rem 0 0;
 	color: var(--text-primary);
-}
-
-.limit-note {
-	margin: 0.85rem 0 0;
-	text-align: center;
 }
 
 .primary-button {

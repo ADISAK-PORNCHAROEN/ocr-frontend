@@ -39,6 +39,7 @@ const pages: PageDetail[] = [
 		originalText: null,
 		lines: null,
 		imageSize: null,
+		ocrDurationMs: 78.6,
 	},
 	{
 		number: 2,
@@ -49,6 +50,7 @@ const pages: PageDetail[] = [
 		originalText: "",
 		lines: [],
 		imageSize: { width: 10, height: 20 },
+		ocrDurationMs: null,
 	},
 	{
 		number: 1,
@@ -59,6 +61,7 @@ const pages: PageDetail[] = [
 		originalText: "ข้อความต้นฉบับ",
 		lines: [{ text: "ข้อความต้นฉบับ", confidence: 0.97, box: { x1: 1, y1: 2, x2: 8, y2: 9 } }],
 		imageSize: { width: 10, height: 20 },
+		ocrDurationMs: 142.37,
 	},
 ];
 

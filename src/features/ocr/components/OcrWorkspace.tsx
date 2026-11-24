@@ -105,7 +105,6 @@ export function OcrWorkspace() {
 					) : null}
 					<UploadPanel
 						capabilities={capabilities.data}
-						capabilitiesError={Boolean(capabilities.error)}
 						uploading={upload.isPending}
 						uploadError={uploadError}
 						onUpload={submit}
@@ -268,6 +267,7 @@ function ActiveJob({ initialJob, onEnd }: { initialJob: Job; onEnd: () => void }
 							originalText: null,
 							lines: null,
 							imageSize: null,
+							ocrDurationMs: null,
 						},
 				);
 			const snapshot = { job, pages: exportPages, drafts: exportDrafts, revision: exportRevision };

@@ -6,7 +6,6 @@ import type { Capabilities } from "../api/schema";
 
 type Props = {
 	capabilities: Capabilities | undefined;
-	capabilitiesError: boolean;
 	uploading: boolean;
 	uploadError: OcrRequestError | null;
 	onUpload: (file: File) => void;
@@ -33,13 +32,7 @@ function resolveMediaType(file: File) {
 	return extensionType;
 }
 
-export function UploadPanel({
-	capabilities,
-	capabilitiesError,
-	uploading,
-	uploadError,
-	onUpload,
-}: Props) {
+export function UploadPanel({ capabilities, uploading, uploadError, onUpload }: Props) {
 	const inputRef = useRef<HTMLInputElement>(null);
 	const [file, setFile] = useState<File | null>(null);
 	const [validationError, setValidationError] = useState<string | null>(null);
@@ -55,9 +48,7 @@ export function UploadPanel({
 		}
 		if (capabilities && candidate.size > capabilities.maxUploadBytes) {
 			setFile(null);
-			setValidationError(
-				`ไฟล์มีขนาด ${formatBytes(candidate.size)} เกินขีดจำกัด ${formatBytes(capabilities.maxUploadBytes)}`,
-			);
+			setValidationError("ไฟล์มีขนาดเกินกว่าที่ระบบรองรับ");
 			return;
 		}
 		setFile(candidate);
@@ -163,15 +154,6 @@ export function UploadPanel({
 						<p>{uploadError.message}</p>
 						{uncertainUpload ? <p>หากต้องการลองอีกครั้ง ให้กดส่งไฟล์นี้ด้วยตนเอง</p> : null}
 					</div>
-				) : null}
-
-				{capabilities ? (
-					<p className="limit-note">
-						ไม่เกิน {formatBytes(capabilities.maxUploadBytes)} · สูงสุด{" "}
-						{capabilities.maxPages.toLocaleString("th-TH")} หน้า
-					</p>
-				) : capabilitiesError ? (
-					<p className="limit-note">ยังอ่านขีดจำกัดจาก backend ไม่ได้ ระบบจะตรวจไฟล์อีกครั้งเมื่อส่ง</p>
 				) : null}
 
 				<button
