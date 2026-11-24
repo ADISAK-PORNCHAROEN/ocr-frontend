@@ -1,3 +1,4 @@
 docs/history/agent-instructions/AGENTS.2026-11-22-930a3ccfb6f8.md -text whitespace=cr-at-eol
 .agents/skills/** -text whitespace=cr-at-eol
 .agents/skills/impeccable/** -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
+.agents/skills/impeccable/scripts/** linguist-vendored
